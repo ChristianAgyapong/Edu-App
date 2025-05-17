@@ -1,9 +1,10 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Platform, Animated, Image, TextInput, Dimensions, Linking, Alert, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Platform, Animated, Image, TextInput, Dimensions, Alert, Modal, ActivityIndicator } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import { MaterialIcons, FontAwesome5, Ionicons, AntDesign } from '@expo/vector-icons';
 import Colors from '../../constants/Colors';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as WebBrowser from 'expo-web-browser';
 
 const { width } = Dimensions.get('window');
 const isWeb = Platform.OS === 'web';
@@ -108,31 +109,18 @@ export default function Explore() {
   const handleOpenLink = async (url, title) => {
     try {
       setIsLoading(true);
-
       if (isWeb) {
-        // For web platform, open in new tab
         window.open(url, '_blank');
       } else {
-        // For native platforms, use Linking API
-        const supported = await Linking.canOpenURL(url);
-        if (supported) {
-          await Linking.openURL(url);
-        } else {
-          Alert.alert(
-            'Error',
-            `Cannot open URL: ${url}`,
-            [{ text: 'OK' }]
-          );
-        }
+        await WebBrowser.openBrowserAsync(url);
       }
     } catch (error) {
-      if (!isWeb) {
-        Alert.alert(
-          'Error',
-          'Unable to open the link. Please try again later.',
-          [{ text: 'OK' }]
-        );
-      }
+      console.error('Error opening URL:', error);
+      Alert.alert(
+        'Error',
+        'Unable to open the link. Please try again later.',
+        [{ text: 'OK' }]
+      );
     } finally {
       setIsLoading(false);
     }
@@ -447,7 +435,7 @@ export default function Explore() {
   ];
 
   const LoadingOverlay = () => (
-    !isWeb && isLoading ? (
+    isLoading ? (
       <View style={styles.loadingOverlay}>
         <ActivityIndicator size="large" color={Colors.PRIMARY} />
         <Text style={styles.loadingText}>Opening link...</Text>
@@ -880,8 +868,9 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#ffffff',
     marginBottom: 20,
+    textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
   },
   filterScroll: {
     marginTop: 10,
@@ -891,18 +880,22 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     marginRight: 10,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   filterButtonActive: {
     backgroundColor: Colors.PRIMARY,
+    borderColor: Colors.PRIMARY,
   },
   filterText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '500',
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '600',
   },
   filterTextActive: {
-    color: '#000',
+    color: '#000000',
+    fontWeight: 'bold',
   },
   content: {
     flex: 1,
@@ -915,8 +908,9 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#ffffff',
     marginBottom: 20,
+    textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
   },
   featuredScroll: {
     marginLeft: -20,
@@ -941,13 +935,13 @@ const styles = StyleSheet.create({
   courseTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#ffffff',
     marginBottom: 8,
   },
   courseDescription: {
-    fontSize: 14,
-    color: '#f0f0f0',
-    lineHeight: 20,
+    fontSize: 15,
+    color: '#e0e0e0',
+    lineHeight: 22,
     marginBottom: 12,
   },
   highlightsContainer: {
@@ -972,22 +966,30 @@ const styles = StyleSheet.create({
   statsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginTop: 12,
   },
   rating: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'rgba(255, 215, 0, 0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginRight: 12,
   },
   ratingText: {
     marginLeft: 4,
-    color: '#fff',
-    fontSize: 14,
+    color: '#FFD700',
+    fontSize: 15,
+    fontWeight: 'bold',
   },
   studentsText: {
-    color: '#fff',
-    fontSize: 14,
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '500',
   },
   priceText: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     color: Colors.PRIMARY,
   },
@@ -1014,20 +1016,21 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   instructorName: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#ffffff',
     marginBottom: 4,
   },
   instructorExpertise: {
-    fontSize: 14,
+    fontSize: 16,
     color: Colors.PRIMARY,
     marginBottom: 8,
+    fontWeight: '600',
   },
   instructorDescription: {
-    fontSize: 14,
-    color: '#f0f0f0',
-    lineHeight: 20,
+    fontSize: 15,
+    color: '#e0e0e0',
+    lineHeight: 22,
     marginVertical: 8,
   },
   specialtiesContainer: {
@@ -1036,17 +1039,19 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
   specialtyTag: {
-    backgroundColor: 'rgba(0, 255, 149, 0.1)',
+    backgroundColor: 'rgba(0, 255, 149, 0.15)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
     marginRight: 8,
     marginBottom: 8,
+    borderWidth: 1,
+    borderColor: Colors.PRIMARY,
   },
   specialtyText: {
     color: Colors.PRIMARY,
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: 14,
+    fontWeight: '600',
   },
   instructorCard: {
     width: isWeb ? 350 : width - 80,
@@ -1054,6 +1059,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#232838',
     borderRadius: 16,
     padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
   instructorIconContainer: {
     width: 80,
@@ -1222,6 +1232,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#232838',
     borderRadius: 16,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
   pathImage: {
     width: '100%',
@@ -1232,9 +1247,9 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   pathTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#ffffff',
     marginBottom: 8,
   },
   pathStats: {
@@ -1242,13 +1257,15 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   pathDuration: {
-    fontSize: 14,
+    fontSize: 15,
     color: Colors.PRIMARY,
     marginRight: 12,
+    fontWeight: '600',
   },
   pathLevel: {
-    fontSize: 14,
-    color: '#f0f0f0',
+    fontSize: 15,
+    color: '#e0e0e0',
+    fontWeight: '500',
   },
   pathCourses: {
     fontSize: 14,
@@ -1325,6 +1342,11 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
   categoryIcon: {
     width: 60,
@@ -1336,14 +1358,16 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   categoryTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#000',
+    color: '#000000',
     marginBottom: 4,
+    textAlign: 'center',
   },
   categoryCount: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 15,
+    color: '#333333',
+    fontWeight: '500',
   },
   previewButton: {
     flexDirection: 'row',
@@ -1363,21 +1387,25 @@ const styles = StyleSheet.create({
     marginVertical: 12,
   },
   resourcesTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
+    color: '#ffffff',
+    marginBottom: 12,
   },
   resourceLink: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 4,
+    paddingVertical: 6,
+    backgroundColor: 'rgba(0, 255, 149, 0.1)',
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginBottom: 8,
   },
   resourceText: {
     color: Colors.PRIMARY,
     marginLeft: 8,
-    fontSize: 14,
-    textDecorationLine: 'underline',
+    fontSize: 15,
+    fontWeight: '500',
   },
   platformsGrid: {
     flexDirection: 'row',
@@ -1391,26 +1419,34 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
   platformName: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#ffffff',
     marginVertical: 8,
+    textAlign: 'center',
   },
   platformDescription: {
-    fontSize: 14,
-    color: '#f0f0f0',
+    fontSize: 15,
+    color: '#e0e0e0',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
+    lineHeight: 20,
   },
   partnersContainer: {
     alignItems: 'center',
   },
   partnerText: {
     color: Colors.PRIMARY,
-    fontSize: 14,
+    fontSize: 15,
     marginVertical: 2,
+    fontWeight: '500',
   },
   resourceCard: {
     flexDirection: 'row',
@@ -1419,15 +1455,20 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
   resourceContent: {
     flex: 1,
     marginHorizontal: 16,
   },
   resourceName: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#ffffff',
     marginBottom: 8,
   },
   topicsContainer: {
@@ -1435,16 +1476,19 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   topicTag: {
-    backgroundColor: 'rgba(0, 255, 149, 0.1)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    backgroundColor: 'rgba(0, 255, 149, 0.15)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 12,
     marginRight: 8,
     marginBottom: 4,
+    borderWidth: 1,
+    borderColor: Colors.PRIMARY,
   },
   topicText: {
     color: Colors.PRIMARY,
-    fontSize: 12,
+    fontSize: 14,
+    fontWeight: '600',
   },
   webViewContainer: {
     flex: 1,
@@ -1483,14 +1527,34 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1000,
   },
   loadingText: {
-    color: '#fff',
-    marginTop: 10,
+    color: '#ffffff',
+    marginTop: 12,
     fontSize: 16,
+    fontWeight: '600',
+  },
+  courseStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    padding: 8,
+    borderRadius: 8,
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  statText: {
+    color: '#ffffff',
+    marginLeft: 4,
+    fontSize: 14,
+    fontWeight: '500',
   },
 }); 
