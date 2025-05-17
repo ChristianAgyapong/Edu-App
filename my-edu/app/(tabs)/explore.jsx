@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Platform, Animated, Image, TextInput, Dimensions } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Platform, Animated, Image, TextInput, Dimensions, Linking, Alert } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import { MaterialIcons, FontAwesome5, Ionicons, AntDesign } from '@expo/vector-icons';
 import Colors from '../../constants/Colors';
@@ -100,36 +100,87 @@ export default function Explore() {
     }
   ];
 
+  const handleOpenLink = async (url) => {
+    const supported = await Linking.canOpenURL(url);
+    if (supported) {
+      await Linking.openURL(url);
+    } else {
+      Alert.alert('Error', 'Cannot open this URL');
+    }
+  };
+
   const featuredCourses = [
     {
       id: 1,
       title: 'Complete Python Bootcamp 2024',
+      description: 'Master Python programming from basics to advanced concepts. Build real-world projects and learn industry best practices.',
       instructor: 'Dr. Angela Yu',
       rating: 4.9,
       students: '255.5k',
       price: '$89.99',
-      image: 'https://img.freepik.com/free-vector/programming-concept-illustration_114360-1351.jpg',
-      tags: ['Bestseller', 'Python', 'Programming']
+      icon: 'code',
+      tags: ['Bestseller', 'Python', 'Programming'],
+      highlights: ['100+ hours content', 'Certificate', '24/7 Support'],
+      courseUrl: 'https://www.udemy.com/course/complete-python-bootcamp/',
+      previewUrl: 'https://www.youtube.com/watch?v=rfscVS0vtbw',
+      resources: [
+        {
+          title: 'Python Documentation',
+          url: 'https://docs.python.org/3/'
+        },
+        {
+          title: 'Practice Exercises',
+          url: 'https://www.hackerrank.com/domains/python'
+        }
+      ]
     },
     {
       id: 2,
-      title: 'Advanced Mathematics',
-      instructor: 'Prof. Leonard Smith',
+      title: 'Machine Learning A-Z',
+      description: 'Complete machine learning course with Python and R. Includes deep learning, NLP, and real-world projects.',
+      instructor: 'Prof. Andrew Ng',
       rating: 4.8,
-      students: '125.3k',
-      price: '$79.99',
-      image: 'https://img.freepik.com/free-vector/mathematics-concept-illustration_114360-3972.jpg',
-      tags: ['Popular', 'Mathematics', 'Calculus']
+      students: '195.3k',
+      price: '$94.99',
+      icon: 'brain',
+      tags: ['AI', 'Machine Learning', 'Data Science'],
+      highlights: ['60+ hours content', 'Real Projects', 'Industry Ready'],
+      courseUrl: 'https://www.coursera.org/learn/machine-learning',
+      previewUrl: 'https://www.youtube.com/watch?v=jGwO_UgTS7I',
+      resources: [
+        {
+          title: 'TensorFlow Tutorials',
+          url: 'https://www.tensorflow.org/tutorials'
+        },
+        {
+          title: 'Kaggle Competitions',
+          url: 'https://www.kaggle.com/competitions'
+        }
+      ]
     },
     {
       id: 3,
-      title: 'UI/UX Design Masterclass',
-      instructor: 'Sarah Johnson',
+      title: 'Modern Web Development',
+      description: 'Learn modern web development with React, Node.js, and modern JavaScript practices.',
+      instructor: 'Max Schwarzmüller',
       rating: 4.9,
       students: '180.1k',
       price: '$94.99',
-      image: 'https://img.freepik.com/free-vector/design-process-concept-illustration_114360-1437.jpg',
-      tags: ['Trending', 'Design', 'UI/UX']
+      icon: 'web',
+      tags: ['Web Dev', 'React', 'JavaScript'],
+      highlights: ['Complete Stack', 'Modern Tools', 'Real Projects'],
+      courseUrl: 'https://www.udemy.com/course/react-the-complete-guide-incl-redux',
+      previewUrl: 'https://www.youtube.com/watch?v=Ke90Tje7VS0',
+      resources: [
+        {
+          title: 'React Documentation',
+          url: 'https://react.dev/'
+        },
+        {
+          title: 'MDN Web Docs',
+          url: 'https://developer.mozilla.org/'
+        }
+      ]
     }
   ];
 
@@ -179,7 +230,9 @@ export default function Explore() {
       students: '1.2M',
       rating: 4.9,
       courses: 15,
-      image: 'https://img.freepik.com/free-vector/woman-teacher-standing-near-blackboard_74855-6538.jpg'
+      description: 'Lead instructor with 10+ years of teaching experience in web development and programming.',
+      icon: 'laptop-code',
+      specialties: ['JavaScript', 'Python', 'React']
     },
     {
       id: 2,
@@ -188,7 +241,9 @@ export default function Explore() {
       students: '950K',
       rating: 4.8,
       courses: 12,
-      image: 'https://img.freepik.com/free-vector/professor-concept-illustration_114360-4226.jpg'
+      description: 'Stanford professor and AI researcher with extensive experience in machine learning.',
+      icon: 'brain',
+      specialties: ['AI', 'Deep Learning', 'Neural Networks']
     },
     {
       id: 3,
@@ -197,7 +252,9 @@ export default function Explore() {
       students: '750K',
       rating: 4.9,
       courses: 18,
-      image: 'https://img.freepik.com/free-vector/female-designer-concept-illustration_114360-4088.jpg'
+      description: 'Design leader with experience at top tech companies, specializing in user experience.',
+      icon: 'pencil-ruler',
+      specialties: ['Figma', 'UI Design', 'User Research']
     }
   ];
 
@@ -262,6 +319,57 @@ export default function Explore() {
     }
   ];
 
+  const onlinePlatforms = [
+    {
+      id: 1,
+      name: 'Coursera',
+      url: 'https://www.coursera.org',
+      icon: 'school',
+      description: 'Access courses from top universities worldwide',
+      partners: ['Stanford', 'MIT', 'Yale']
+    },
+    {
+      id: 2,
+      name: 'edX',
+      url: 'https://www.edx.org',
+      icon: 'laptop-mac',
+      description: 'Professional certificates and degree programs',
+      partners: ['Harvard', 'Berkeley', 'Microsoft']
+    },
+    {
+      id: 3,
+      name: 'Udacity',
+      url: 'https://www.udacity.com',
+      icon: 'code',
+      description: 'Industry-recognized nanodegree programs',
+      partners: ['Google', 'AWS', 'IBM']
+    }
+  ];
+
+  const freeResources = [
+    {
+      id: 1,
+      name: 'freeCodeCamp',
+      url: 'https://www.freecodecamp.org',
+      icon: 'code',
+      topics: ['Web Development', 'JavaScript', 'Python']
+    },
+    {
+      id: 2,
+      name: 'Khan Academy',
+      url: 'https://www.khanacademy.org',
+      icon: 'school',
+      topics: ['Math', 'Science', 'Computing']
+    },
+    {
+      id: 3,
+      name: 'MIT OpenCourseWare',
+      url: 'https://ocw.mit.edu',
+      icon: 'library-books',
+      topics: ['Engineering', 'Science', 'Mathematics']
+    }
+  ];
+
   return (
     <View style={styles.container}>
       <Animated.View style={[styles.header, { height: headerHeight }]}>
@@ -309,24 +417,49 @@ export default function Explore() {
           <Text style={styles.sectionTitle}>Featured Courses</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.featuredScroll}>
             {featuredCourses.map((course) => (
-              <TouchableOpacity key={course.id} style={styles.featuredCard}>
-                <Image source={{ uri: course.image }} style={styles.featuredImage} />
-                <View style={styles.featuredContent}>
-                  <View style={styles.tagContainer}>
-                    {course.tags.map((tag, index) => (
-                      <View key={index} style={styles.tag}>
-                        <Text style={styles.tagText}>{tag}</Text>
-                      </View>
+              <TouchableOpacity 
+                key={course.id} 
+                style={styles.featuredCard}
+                onPress={() => handleOpenLink(course.courseUrl)}
+              >
+                <View style={styles.courseHeader}>
+                  <MaterialIcons name={course.icon} size={40} color={Colors.PRIMARY} />
+                  <TouchableOpacity 
+                    style={styles.previewButton}
+                    onPress={() => handleOpenLink(course.previewUrl)}
+                  >
+                    <MaterialIcons name="play-circle-filled" size={24} color={Colors.PRIMARY} />
+                    <Text style={styles.previewText}>Watch Preview</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.courseContent}>
+                  <Text style={styles.courseTitle}>{course.title}</Text>
+                  <Text style={styles.courseDescription}>{course.description}</Text>
+                  <Text style={styles.instructorName}>by {course.instructor}</Text>
+
+                  <View style={styles.resourcesContainer}>
+                    <Text style={styles.resourcesTitle}>Learning Resources:</Text>
+                    {course.resources.map((resource, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={styles.resourceLink}
+                        onPress={() => handleOpenLink(resource.url)}
+                      >
+                        <MaterialIcons name="link" size={16} color={Colors.PRIMARY} />
+                        <Text style={styles.resourceText}>{resource.title}</Text>
+                      </TouchableOpacity>
                     ))}
                   </View>
-                  <Text style={styles.featuredTitle}>{course.title}</Text>
-                  <Text style={styles.instructorName}>{course.instructor}</Text>
-                  <View style={styles.courseStats}>
-                    <View style={styles.rating}>
-                      <MaterialIcons name="star" size={16} color="#FFD700" />
-                      <Text style={styles.ratingText}>{course.rating}</Text>
+
+                  <View style={styles.courseFooter}>
+                    <View style={styles.statsContainer}>
+                      <View style={styles.rating}>
+                        <MaterialIcons name="star" size={16} color="#FFD700" />
+                        <Text style={styles.ratingText}>{course.rating}</Text>
+                      </View>
+                      <Text style={styles.studentsText}>{course.students} students</Text>
                     </View>
-                    <Text style={styles.studentsText}>{course.students} students</Text>
                     <Text style={styles.priceText}>{course.price}</Text>
                   </View>
                 </View>
@@ -335,30 +468,87 @@ export default function Explore() {
           </ScrollView>
         </View>
 
+        {/* Online Learning Platforms */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Learning Platforms</Text>
+          <View style={styles.platformsGrid}>
+            {onlinePlatforms.map((platform) => (
+              <TouchableOpacity
+                key={platform.id}
+                style={styles.platformCard}
+                onPress={() => handleOpenLink(platform.url)}
+              >
+                <MaterialIcons name={platform.icon} size={32} color={Colors.PRIMARY} />
+                <Text style={styles.platformName}>{platform.name}</Text>
+                <Text style={styles.platformDescription}>{platform.description}</Text>
+                <View style={styles.partnersContainer}>
+                  {platform.partners.map((partner, index) => (
+                    <Text key={index} style={styles.partnerText}>• {partner}</Text>
+                  ))}
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Free Learning Resources */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Free Resources</Text>
+          {freeResources.map((resource) => (
+            <TouchableOpacity
+              key={resource.id}
+              style={styles.resourceCard}
+              onPress={() => handleOpenLink(resource.url)}
+            >
+              <MaterialIcons name={resource.icon} size={32} color={Colors.PRIMARY} />
+              <View style={styles.resourceContent}>
+                <Text style={styles.resourceName}>{resource.name}</Text>
+                <View style={styles.topicsContainer}>
+                  {resource.topics.map((topic, index) => (
+                    <View key={index} style={styles.topicTag}>
+                      <Text style={styles.topicText}>{topic}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+              <MaterialIcons name="arrow-forward-ios" size={24} color={Colors.PRIMARY} />
+            </TouchableOpacity>
+          ))}
+        </View>
+
         {/* Popular Section */}
         <View ref={sectionRefs.Popular} style={styles.section}>
-          <Text style={styles.sectionTitle}>Popular Courses</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.featuredScroll}>
-            {featuredCourses.filter(course => course.tags.includes('Popular')).map((course) => (
-              <TouchableOpacity key={course.id} style={styles.featuredCard}>
-                <Image source={{ uri: course.image }} style={styles.featuredImage} />
-                <View style={styles.featuredContent}>
-                  <View style={styles.tagContainer}>
-                    {course.tags.map((tag, index) => (
-                      <View key={index} style={styles.tag}>
-                        <Text style={styles.tagText}>{tag}</Text>
-                      </View>
-                    ))}
-                  </View>
-                  <Text style={styles.featuredTitle}>{course.title}</Text>
-                  <Text style={styles.instructorName}>{course.instructor}</Text>
-                  <View style={styles.courseStats}>
-                    <View style={styles.rating}>
-                      <MaterialIcons name="star" size={16} color="#FFD700" />
-                      <Text style={styles.ratingText}>{course.rating}</Text>
+          <Text style={styles.sectionTitle}>Top Instructors</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.instructorsScroll}>
+            {topInstructors.map((instructor) => (
+              <TouchableOpacity key={instructor.id} style={styles.instructorCard}>
+                <View style={styles.instructorIconContainer}>
+                  <FontAwesome5 name={instructor.icon} size={40} color={Colors.PRIMARY} />
+                </View>
+                <View style={styles.instructorContent}>
+                  <Text style={styles.instructorName}>{instructor.name}</Text>
+                  <Text style={styles.instructorExpertise}>{instructor.expertise}</Text>
+                  <Text style={styles.instructorDescription}>{instructor.description}</Text>
+                  
+                  {instructor.specialties && instructor.specialties.length > 0 && (
+                    <View style={styles.specialtiesContainer}>
+                      {instructor.specialties.map((specialty, index) => (
+                        <View key={index} style={styles.specialtyTag}>
+                          <Text style={styles.specialtyText}>{specialty}</Text>
+                        </View>
+                      ))}
                     </View>
-                    <Text style={styles.studentsText}>{course.students} students</Text>
-                    <Text style={styles.priceText}>{course.price}</Text>
+                  )}
+
+                  <View style={styles.instructorStats}>
+                    <View style={styles.statItem}>
+                      <AntDesign name="user" size={16} color={Colors.PRIMARY} />
+                      <Text style={styles.statText}>{instructor.students}</Text>
+                    </View>
+                    <View style={styles.statItem}>
+                      <MaterialIcons name="book" size={16} color={Colors.PRIMARY} />
+                      <Text style={styles.statText}>{instructor.courses} courses</Text>
+                    </View>
                   </View>
                 </View>
               </TouchableOpacity>
@@ -453,32 +643,6 @@ export default function Explore() {
               </TouchableOpacity>
             ))}
           </View>
-        </View>
-
-        {/* Top Instructors Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Top Instructors</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.instructorsScroll}>
-            {topInstructors.map((instructor) => (
-              <TouchableOpacity key={instructor.id} style={styles.instructorCard}>
-                <Image source={{ uri: instructor.image }} style={styles.instructorImage} />
-                <View style={styles.instructorContent}>
-                  <Text style={styles.instructorName}>{instructor.name}</Text>
-                  <Text style={styles.instructorExpertise}>{instructor.expertise}</Text>
-                  <View style={styles.instructorStats}>
-                    <View style={styles.statItem}>
-                      <AntDesign name="user" size={16} color={Colors.PRIMARY} />
-                      <Text style={styles.statText}>{instructor.students}</Text>
-                    </View>
-                    <View style={styles.statItem}>
-                      <AntDesign name="star" size={16} color="#FFD700" />
-                      <Text style={styles.statText}>{instructor.rating}</Text>
-                    </View>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
         </View>
 
         {/* Learning Paths */}
@@ -667,15 +831,69 @@ const styles = StyleSheet.create({
     marginRight: 20,
     backgroundColor: '#232838',
     borderRadius: 16,
-    overflow: 'hidden',
+    padding: 20,
   },
-  featuredImage: {
-    width: '100%',
-    height: 200,
-    resizeMode: 'cover',
+  courseHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16,
   },
-  featuredContent: {
-    padding: 16,
+  courseContent: {
+    flex: 1,
+  },
+  courseTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 8,
+  },
+  courseDescription: {
+    fontSize: 14,
+    color: '#f0f0f0',
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  highlightsContainer: {
+    marginVertical: 12,
+  },
+  highlightItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  highlightText: {
+    marginLeft: 8,
+    color: '#fff',
+    fontSize: 14,
+  },
+  courseFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  rating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  ratingText: {
+    marginLeft: 4,
+    color: '#fff',
+    fontSize: 14,
+  },
+  studentsText: {
+    color: '#fff',
+    fontSize: 14,
+  },
+  priceText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.PRIMARY,
   },
   tagContainer: {
     flexDirection: 'row',
@@ -710,170 +928,52 @@ const styles = StyleSheet.create({
     color: Colors.PRIMARY,
     marginBottom: 8,
   },
-  instructorStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statText: {
-    marginLeft: 4,
-    color: '#fff',
+  instructorDescription: {
     fontSize: 14,
+    color: '#f0f0f0',
+    lineHeight: 20,
+    marginVertical: 8,
   },
-  categoriesGrid: {
+  specialtiesContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: 15,
+    marginVertical: 8,
   },
-  categoryCard: {
-    width: isWeb ? '31%' : '47%',
-    borderRadius: 16,
-    padding: 20,
-    alignItems: 'center',
+  specialtyTag: {
+    backgroundColor: 'rgba(0, 255, 149, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginRight: 8,
+    marginBottom: 8,
   },
-  categoryIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
+  specialtyText: {
+    color: Colors.PRIMARY,
+    fontSize: 12,
+    fontWeight: '500',
   },
-  categoryTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000',
-    marginBottom: 4,
-  },
-  categoryCount: {
-    fontSize: 14,
-    color: '#666',
-  },
-  pathsScroll: {
-    marginLeft: -20,
-    paddingLeft: 20,
-  },
-  pathCard: {
-    width: isWeb ? 300 : width - 100,
+  instructorCard: {
+    width: isWeb ? 350 : width - 80,
     marginRight: 20,
     backgroundColor: '#232838',
     borderRadius: 16,
-    overflow: 'hidden',
+    padding: 20,
   },
-  pathImage: {
-    width: '100%',
-    height: 150,
-    resizeMode: 'cover',
-  },
-  pathContent: {
-    padding: 16,
-  },
-  pathTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
-  },
-  pathStats: {
-    flexDirection: 'row',
-    marginBottom: 8,
-  },
-  pathDuration: {
-    fontSize: 14,
-    color: Colors.PRIMARY,
-    marginRight: 12,
-  },
-  pathLevel: {
-    fontSize: 14,
-    color: '#f0f0f0',
-  },
-  pathCourses: {
-    fontSize: 14,
-    color: '#f0f0f0',
-    opacity: 0.8,
-  },
-  workshopCard: {
-    flexDirection: 'row',
-    backgroundColor: '#232838',
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginBottom: 15,
-  },
-  workshopImage: {
-    width: 120,
-    height: 120,
-    resizeMode: 'cover',
-  },
-  workshopContent: {
-    flex: 1,
-    padding: 16,
-  },
-  liveTag: {
-    flexDirection: 'row',
+  instructorIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(0, 255, 149, 0.1)',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 59, 48, 0.2)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    alignSelf: 'flex-start',
-    marginBottom: 8,
+    justifyContent: 'center',
+    marginBottom: 16,
   },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#FF3B30',
-    marginRight: 4,
-  },
-  liveText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#FF3B30',
-  },
-  workshopTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 4,
-  },
-  workshopInstructor: {
-    fontSize: 14,
-    color: Colors.PRIMARY,
-    marginBottom: 4,
-  },
-  workshopDate: {
-    fontSize: 14,
-    color: '#f0f0f0',
-    marginBottom: 4,
-  },
-  workshopParticipants: {
-    fontSize: 14,
-    color: '#f0f0f0',
-    opacity: 0.8,
+  instructorContent: {
+    flex: 1,
   },
   instructorsScroll: {
     marginLeft: -20,
     paddingLeft: 20,
-  },
-  instructorCard: {
-    width: isWeb ? 300 : width - 100,
-    marginRight: 20,
-    backgroundColor: '#232838',
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  instructorImage: {
-    width: '100%',
-    height: 180,
-    resizeMode: 'cover',
-  },
-  instructorContent: {
-    padding: 16,
   },
   certCard: {
     flexDirection: 'row',
@@ -1015,5 +1115,239 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#f0f0f0',
     opacity: 0.8,
+  },
+  pathsScroll: {
+    marginLeft: -20,
+    paddingLeft: 20,
+  },
+  pathCard: {
+    width: isWeb ? 300 : width - 100,
+    marginRight: 20,
+    backgroundColor: '#232838',
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  pathImage: {
+    width: '100%',
+    height: 150,
+    resizeMode: 'cover',
+  },
+  pathContent: {
+    padding: 16,
+  },
+  pathTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 8,
+  },
+  pathStats: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  pathDuration: {
+    fontSize: 14,
+    color: Colors.PRIMARY,
+    marginRight: 12,
+  },
+  pathLevel: {
+    fontSize: 14,
+    color: '#f0f0f0',
+  },
+  pathCourses: {
+    fontSize: 14,
+    color: '#f0f0f0',
+    opacity: 0.8,
+  },
+  workshopCard: {
+    flexDirection: 'row',
+    backgroundColor: '#232838',
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 15,
+  },
+  workshopImage: {
+    width: 120,
+    height: 120,
+    resizeMode: 'cover',
+  },
+  workshopContent: {
+    flex: 1,
+    padding: 16,
+  },
+  liveTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 59, 48, 0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#FF3B30',
+    marginRight: 4,
+  },
+  liveText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#FF3B30',
+  },
+  workshopTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  workshopInstructor: {
+    fontSize: 14,
+    color: Colors.PRIMARY,
+    marginBottom: 4,
+  },
+  workshopDate: {
+    fontSize: 14,
+    color: '#f0f0f0',
+    marginBottom: 4,
+  },
+  workshopParticipants: {
+    fontSize: 14,
+    color: '#f0f0f0',
+    opacity: 0.8,
+  },
+  categoriesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 15,
+  },
+  categoryCard: {
+    width: isWeb ? '31%' : '47%',
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+  },
+  categoryIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  categoryTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#000',
+    marginBottom: 4,
+  },
+  categoryCount: {
+    fontSize: 14,
+    color: '#666',
+  },
+  previewButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 255, 149, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  previewText: {
+    color: Colors.PRIMARY,
+    marginLeft: 4,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  resourcesContainer: {
+    marginVertical: 12,
+  },
+  resourcesTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 8,
+  },
+  resourceLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  resourceText: {
+    color: Colors.PRIMARY,
+    marginLeft: 8,
+    fontSize: 14,
+    textDecorationLine: 'underline',
+  },
+  platformsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 15,
+  },
+  platformCard: {
+    width: isWeb ? '31%' : '47%',
+    backgroundColor: '#232838',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+  },
+  platformName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginVertical: 8,
+  },
+  platformDescription: {
+    fontSize: 14,
+    color: '#f0f0f0',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  partnersContainer: {
+    alignItems: 'center',
+  },
+  partnerText: {
+    color: Colors.PRIMARY,
+    fontSize: 14,
+    marginVertical: 2,
+  },
+  resourceCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#232838',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+  },
+  resourceContent: {
+    flex: 1,
+    marginHorizontal: 16,
+  },
+  resourceName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 8,
+  },
+  topicsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  topicTag: {
+    backgroundColor: 'rgba(0, 255, 149, 0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginRight: 8,
+    marginBottom: 4,
+  },
+  topicText: {
+    color: Colors.PRIMARY,
+    fontSize: 12,
   },
 }); 
