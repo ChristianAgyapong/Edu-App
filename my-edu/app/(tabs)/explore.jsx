@@ -6,6 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as WebBrowser from 'expo-web-browser';
 import { useNavigation, useRouter } from 'expo-router';
+import ProgressTracker from '../../utils/progressTracker';
 
 const { width } = Dimensions.get('window');
 const isWeb = Platform.OS === 'web';
@@ -22,6 +23,8 @@ export default function Explore() {
   const [webViewTitle, setWebViewTitle] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isExternalContent, setIsExternalContent] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [expandedPath, setExpandedPath] = useState(null);
 
   // References to section positions
   const sectionRefs = {
@@ -129,28 +132,29 @@ export default function Explore() {
   };
 
   // Enhanced handleOpenLink function
-  const handleOpenLink = async (url, title, type = 'external') => {
+  const handleOpenLink = async (url, title) => {
     try {
       setIsLoading(true);
-      setIsExternalContent(true);
-
-      if (isWeb) {
-        // For web platform
-        const newWindow = window.open(url, '_blank');
-        if (newWindow) {
-          newWindow.onclose = () => {
-            setIsExternalContent(false);
-          };
-        }
-      } else {
-        // For mobile platforms
-        const result = await WebBrowser.openBrowserAsync(url);
-        if (result.type === 'cancel' || result.type === 'dismiss') {
-          setIsExternalContent(false);
+      
+      // Track learning time and course progress
+      await ProgressTracker.updateLearningTime(5); // Add 5 minutes for each content view
+      
+      // Open URL in browser
+      const result = await WebBrowser.openBrowserAsync(url);
+      
+      if (result.type === 'completed') {
+        // Track course progress if it's a course URL
+        if (url.includes('course')) {
+          await ProgressTracker.trackCourseProgress(
+            url, // Using URL as courseId
+            title,
+            Math.floor(Math.random() * 20) + 5, // Simulate 5-25% progress for each view
+            getCategoryFromUrl(url) // Helper function to determine category
+          );
         }
       }
     } catch (error) {
-      console.error('Error opening URL:', error);
+      console.error('Error opening link:', error);
       Alert.alert(
         'Error',
         'Unable to open the link. Please try again later.',
@@ -158,6 +162,337 @@ export default function Explore() {
       );
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Helper function to determine category from URL
+  const getCategoryFromUrl = (url) => {
+    if (url.includes('programming') || url.includes('code')) return 'Programming';
+    if (url.includes('design')) return 'Design';
+    if (url.includes('math')) return 'Mathematics';
+    if (url.includes('language')) return 'Languages';
+    if (url.includes('science')) return 'Science';
+    if (url.includes('music')) return 'Music';
+    return 'Other';
+  };
+
+  // Update category URLs
+  const categoryUrls = {
+    'Programming': 'https://www.freecodecamp.org/learn',
+    'Design': 'https://www.coursera.org/browse/arts-and-humanities/design',
+    'Mathematics': 'https://www.khanacademy.org/math',
+    'Languages': 'https://www.duolingo.com',
+    'Science': 'https://www.edx.org/learn/science',
+    'Music': 'https://www.coursera.org/browse/arts-and-humanities/music'
+  };
+
+  // Update course URLs
+  const courseUrls = {
+    'Complete Python Bootcamp 2024': 'https://www.freecodecamp.org/learn/scientific-computing-with-python/',
+    'Machine Learning A-Z': 'https://www.coursera.org/learn/machine-learning',
+    'Modern Web Development': 'https://www.freecodecamp.org/learn/responsive-web-design/'
+  };
+
+  // Update learning path URLs
+  const pathUrls = {
+    'Full-Stack Development': 'https://www.freecodecamp.org/learn/full-stack/',
+    'Data Science': 'https://www.coursera.org/professional-certificates/ibm-data-science'
+  };
+
+  // Update workshop URLs
+  const workshopUrls = {
+    'Building AI Applications': 'https://www.coursera.org/learn/ai-for-everyone',
+    'Mastering React Native': 'https://www.freecodecamp.org/learn/mobile-app-development/'
+  };
+
+  // Update certification URLs
+  const certificationUrls = {
+    'Full Stack Developer': 'https://www.freecodecamp.org/learn/full-stack/',
+    'Data Science Specialist': 'https://www.coursera.org/professional-certificates/ibm-data-science'
+  };
+
+  // Enhanced category content structure
+  const categoryContent = {
+    'Programming': {
+      description: 'Master various programming languages and software development skills',
+      popularTopics: ['Python', 'JavaScript', 'Java', 'Web Development', 'Mobile Apps'],
+      learningPaths: [
+        {
+          title: 'Web Development',
+          duration: '6 months',
+          courses: ['HTML & CSS Basics', 'JavaScript Fundamentals', 'React Development']
+        },
+        {
+          title: 'Mobile Development',
+          duration: '4 months',
+          courses: ['React Native Basics', 'iOS Development', 'Android Development']
+        }
+      ],
+      resources: [
+        {
+          title: 'FreeCodeCamp',
+          url: 'https://www.freecodecamp.org/learn'
+        },
+        {
+          title: 'MDN Web Docs',
+          url: 'https://developer.mozilla.org/'
+        }
+      ]
+    },
+    'Design': {
+      description: 'Learn UI/UX design, graphic design, and digital art',
+      popularTopics: ['UI Design', 'UX Research', 'Graphic Design', 'Design Systems', 'Typography'],
+      learningPaths: [
+        {
+          title: 'UI/UX Design',
+          duration: '5 months',
+          courses: ['Design Principles', 'User Research', 'Prototyping']
+        },
+        {
+          title: 'Graphic Design',
+          duration: '4 months',
+          courses: ['Color Theory', 'Typography', 'Brand Design']
+        }
+      ],
+      resources: [
+        {
+          title: 'Figma Tutorials',
+          url: 'https://www.figma.com/resources/learn-design/'
+        },
+        {
+          title: 'Design Resources',
+          url: 'https://www.coursera.org/browse/arts-and-humanities/design'
+        }
+      ]
+    },
+    'Mathematics': {
+      description: 'Explore mathematics from basic concepts to advanced topics',
+      popularTopics: ['Calculus', 'Linear Algebra', 'Statistics', 'Discrete Math', 'Number Theory'],
+      learningPaths: [
+        {
+          title: 'Data Science Math',
+          duration: '3 months',
+          courses: ['Statistics', 'Linear Algebra', 'Calculus']
+        },
+        {
+          title: 'Pure Mathematics',
+          duration: '6 months',
+          courses: ['Abstract Algebra', 'Real Analysis', 'Number Theory']
+        }
+      ],
+      resources: [
+        {
+          title: 'Khan Academy',
+          url: 'https://www.khanacademy.org/math'
+        },
+        {
+          title: 'MIT OpenCourseWare',
+          url: 'https://ocw.mit.edu/courses/mathematics/'
+        }
+      ]
+    },
+    'Languages': {
+      description: 'Learn new languages and improve your communication skills',
+      popularTopics: ['English', 'Spanish', 'Mandarin', 'French', 'German'],
+      learningPaths: [
+        {
+          title: 'Business English',
+          duration: '4 months',
+          courses: ['Business Communication', 'Professional Writing', 'Presentation Skills']
+        },
+        {
+          title: 'Spanish Fluency',
+          duration: '6 months',
+          courses: ['Spanish Basics', 'Intermediate Spanish', 'Advanced Conversation']
+        }
+      ],
+      resources: [
+        {
+          title: 'Duolingo',
+          url: 'https://www.duolingo.com'
+        },
+        {
+          title: 'Language Exchange',
+          url: 'https://www.conversationexchange.com'
+        }
+      ]
+    },
+    'Science': {
+      description: 'Discover the wonders of science across various disciplines',
+      popularTopics: ['Physics', 'Chemistry', 'Biology', 'Astronomy', 'Environmental Science'],
+      learningPaths: [
+        {
+          title: 'Physics Fundamentals',
+          duration: '5 months',
+          courses: ['Classical Mechanics', 'Electromagnetism', 'Quantum Physics']
+        },
+        {
+          title: 'Life Sciences',
+          duration: '6 months',
+          courses: ['Cell Biology', 'Genetics', 'Evolution']
+        }
+      ],
+      resources: [
+        {
+          title: 'edX Science Courses',
+          url: 'https://www.edx.org/learn/science'
+        },
+        {
+          title: 'National Geographic',
+          url: 'https://education.nationalgeographic.org'
+        }
+      ]
+    },
+    'Music': {
+      description: 'Learn music theory, instruments, and production',
+      popularTopics: ['Music Theory', 'Piano', 'Guitar', 'Music Production', 'Songwriting'],
+      learningPaths: [
+        {
+          title: 'Music Production',
+          duration: '4 months',
+          courses: ['DAW Basics', 'Sound Design', 'Mixing & Mastering']
+        },
+        {
+          title: 'Music Theory',
+          duration: '3 months',
+          courses: ['Basic Theory', 'Harmony', 'Composition']
+        }
+      ],
+      resources: [
+        {
+          title: 'Coursera Music',
+          url: 'https://www.coursera.org/browse/arts-and-humanities/music'
+        },
+        {
+          title: 'Berklee Online',
+          url: 'https://online.berklee.edu'
+        }
+      ]
+    }
+  };
+
+  // Enhanced handleCategoryPress function
+  const handleCategoryPress = async (category) => {
+    try {
+      setSelectedCategory(category.title);
+      const categoryData = categoryContent[category.title];
+      
+      // Track category exploration
+      await ProgressTracker.addRecentActivity({
+        type: 'category_explored',
+        title: `Explored ${category.title}`,
+        detail: 'Browsing category content',
+        timestamp: new Date().toISOString()
+      });
+
+      // Show category detail modal
+      Alert.alert(
+        category.title,
+        categoryData.description,
+        [
+          {
+            text: 'View Resources',
+            onPress: () => {
+              categoryData.resources.forEach(resource => {
+                handleOpenLink(resource.url, resource.title);
+              });
+            }
+          },
+          {
+            text: 'Start Learning Path',
+            onPress: () => {
+              const path = categoryData.learningPaths[0];
+              handleLearningPathPress({
+                title: path.title,
+                duration: path.duration,
+                courses: path.courses.length,
+                category: category.title
+              });
+            }
+          },
+          {
+            text: 'Close',
+            style: 'cancel'
+          }
+        ]
+      );
+
+      // Update category progress
+      const progress = await ProgressTracker.getCategoryProgress();
+      const categoryIndex = progress.findIndex(cat => cat.name === category.title);
+      if (categoryIndex !== -1) {
+        progress[categoryIndex].explored = true;
+        await ProgressTracker.updateCategoryProgress(progress);
+      }
+    } catch (error) {
+      console.error('Error handling category:', error);
+    }
+  };
+
+  // Update handleCoursePress
+  const handleCoursePress = async (course) => {
+    try {
+      const url = courseUrls[course.title] || course.courseUrl;
+      if (url) {
+        // Track course start if not already started
+        const courseProgress = await ProgressTracker.getCourseProgress();
+        if (!courseProgress[url]) {
+          const stats = await ProgressTracker.getLearningStats();
+          stats.coursesStarted += 1;
+          await ProgressTracker.saveLearningStats(stats);
+        }
+
+        await handleOpenLink(url, course.title);
+      }
+    } catch (error) {
+      console.error('Error handling course:', error);
+    }
+  };
+
+  // Update handleLearningPathPress
+  const handleLearningPathPress = async (path) => {
+    try {
+      const url = pathUrls[path.title];
+      if (url) {
+        await handleOpenLink(url, path.title);
+      }
+    } catch (error) {
+      console.error('Error handling learning path:', error);
+    }
+  };
+
+  // Update handleWorkshopPress
+  const handleWorkshopPress = async (workshop) => {
+    try {
+      const url = workshopUrls[workshop.title];
+      if (url) {
+        await ProgressTracker.updateWorkshopStatus(
+          workshop.id,
+          workshop.title,
+          { registered: true }
+        );
+        await handleOpenLink(url, workshop.title);
+      }
+    } catch (error) {
+      console.error('Error handling workshop:', error);
+    }
+  };
+
+  // Update handleCertificationPress
+  const handleCertificationPress = async (cert) => {
+    try {
+      const url = certificationUrls[cert.title];
+      if (url) {
+        await ProgressTracker.updateCertificationProgress(
+          cert.id,
+          cert.title,
+          0,
+          cert.tasks ? cert.tasks.length : 10
+        );
+        await handleOpenLink(url, cert.title);
+      }
+    } catch (error) {
+      console.error('Error handling certification:', error);
     }
   };
 
@@ -179,37 +514,6 @@ export default function Explore() {
     handleOpenLink(eventUrls[event.title], event.title);
   };
 
-  // Function to handle certification enrollment
-  const handleCertificationPress = (cert) => {
-    const certUrls = {
-      'Full Stack Developer': 'https://www.techacademy.com/full-stack-certification',
-      'Data Science Specialist': 'https://www.datainstitute.com/data-science-cert'
-    };
-    handleOpenLink(certUrls[cert.title], cert.title);
-  };
-
-  // Function to handle workshop registration
-  const handleWorkshopPress = (workshop) => {
-    const workshopUrls = {
-      'Building AI Applications': 'https://example.com/ai-workshop',
-      'Mastering React Native': 'https://example.com/react-native-workshop'
-    };
-    handleOpenLink(workshopUrls[workshop.title], workshop.title);
-  };
-
-  // Update existing handlers to include navigation
-  const handleCategoryPress = (category) => {
-    const categoryUrls = {
-      'Programming': 'https://www.coursera.org/browse/computer-science/programming',
-      'Design': 'https://www.coursera.org/browse/arts-and-humanities/design',
-      'Mathematics': 'https://www.khanacademy.org/math',
-      'Languages': 'https://www.duolingo.com',
-      'Science': 'https://www.edx.org/learn/science',
-      'Music': 'https://www.coursera.org/browse/arts-and-humanities/music'
-    };
-    handleOpenLink(categoryUrls[category.title], `${category.title} Courses`);
-  };
-
   const handleInstructorPress = (instructor) => {
     const instructorUrls = {
       'Dr. Angela Yu': 'https://www.udemy.com/user/4b4368a3-b5c8-4529-aa65-2056ec31f37e/',
@@ -220,13 +524,25 @@ export default function Explore() {
     handleOpenLink(instructorUrls[instructor.name], `${instructor.name}'s Profile`);
   };
 
-  const handleLearningPathPress = (path) => {
-    const pathUrls = {
-      'Full-Stack Development': 'https://www.freecodecamp.org/learn/full-stack/',
-      'Data Science': 'https://www.coursera.org/professional-certificates/ibm-data-science'
-    };
-    
-    handleOpenLink(pathUrls[path.title], path.title);
+  const handleQuizStart = async (course) => {
+    try {
+      // Simulate a quiz completion with a random score
+      const score = Math.floor(Math.random() * 30) + 70; // Score between 70-100
+      await ProgressTracker.trackQuizCompletion(
+        course.id,
+        `${course.title} Quiz`,
+        score
+      );
+
+      // Show quiz result
+      Alert.alert(
+        'Quiz Completed!',
+        `You scored ${score}% on the ${course.title} quiz.`,
+        [{ text: 'OK' }]
+      );
+    } catch (error) {
+      console.error('Error handling quiz:', error);
+    }
   };
 
   const WebViewHeader = () => (
@@ -514,6 +830,38 @@ export default function Explore() {
     ) : null
   );
 
+  const handlePathPress = async (path) => {
+    setExpandedPath(expandedPath === path.id ? null : path.id);
+    // Track learning path interaction
+    await ProgressTracker.updatePathProgress(
+      path.id,
+      path.title,
+      0, // Initial exploration
+      path.modules.length
+    );
+  };
+
+  const handleModulePress = async (pathId, moduleId, moduleTitle) => {
+    const path = learningPaths.find(p => p.id === pathId);
+    if (path) {
+      const completedModules = Math.min(moduleId, path.modules.length);
+      await ProgressTracker.updatePathProgress(
+        pathId,
+        path.title,
+        completedModules,
+        path.modules.length
+      );
+      
+      // Track course progress
+      await ProgressTracker.trackCourseProgress(
+        `${pathId}-${moduleId}`,
+        moduleTitle,
+        Math.round((completedModules / path.modules.length) * 100),
+        path.category
+      );
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Animated.View style={[styles.header, { height: headerHeight }]}>
@@ -567,17 +915,26 @@ export default function Explore() {
               <TouchableOpacity 
                 key={course.id} 
                 style={styles.featuredCard}
-                onPress={() => handleOpenLink(course.courseUrl, course.title)}
+                onPress={() => handleCoursePress(course)}
               >
                 <View style={styles.courseHeader}>
                   <MaterialIcons name={course.icon} size={40} color={Colors.PRIMARY} />
-                  <TouchableOpacity 
-                    style={styles.previewButton}
-                    onPress={() => handleOpenLink(course.previewUrl, `${course.title} - Preview`)}
-                  >
-                    <MaterialIcons name="play-circle-filled" size={24} color={Colors.PRIMARY} />
-                    <Text style={styles.previewText}>Watch Preview</Text>
-                  </TouchableOpacity>
+                  <View style={styles.courseActions}>
+                    <TouchableOpacity 
+                      style={styles.previewButton}
+                      onPress={() => handleOpenLink(course.previewUrl, `${course.title} - Preview`)}
+                    >
+                      <MaterialIcons name="play-circle-filled" size={24} color={Colors.PRIMARY} />
+                      <Text style={styles.previewText}>Watch Preview</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={styles.quizButton}
+                      onPress={() => handleQuizStart(course)}
+                    >
+                      <MaterialIcons name="assignment" size={24} color={Colors.PRIMARY} />
+                      <Text style={styles.quizText}>Take Quiz</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
 
                 <View style={styles.courseContent}>
@@ -784,7 +1141,11 @@ export default function Explore() {
             {categories.map((category) => (
               <TouchableOpacity 
                 key={category.id} 
-                style={[styles.categoryCard, { backgroundColor: category.backgroundColor }]}
+                style={[
+                  styles.categoryCard, 
+                  { backgroundColor: category.backgroundColor },
+                  selectedCategory === category.title && styles.categoryCardSelected
+                ]}
                 onPress={() => handleCategoryPress(category)}
               >
                 <View style={styles.categoryIcon}>
@@ -792,6 +1153,15 @@ export default function Explore() {
                 </View>
                 <Text style={styles.categoryTitle}>{category.title}</Text>
                 <Text style={styles.categoryCount}>{category.courses} courses</Text>
+                {categoryContent[category.title]?.popularTopics && (
+                  <View style={styles.topicsPreview}>
+                    {categoryContent[category.title].popularTopics.slice(0, 2).map((topic, index) => (
+                      <View key={index} style={styles.topicChip}>
+                        <Text style={styles.topicChipText}>{topic}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
               </TouchableOpacity>
             ))}
           </View>
@@ -800,25 +1170,42 @@ export default function Explore() {
         {/* Learning Paths */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Learning Paths</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pathsScroll}>
-            {learningPaths.map((path) => (
-              <TouchableOpacity 
-                key={path.id} 
-                style={styles.pathCard}
-                onPress={() => handleLearningPathPress(path)}
+          {learningPaths.map((path) => (
+            <View key={path.id} style={styles.pathCard}>
+              <TouchableOpacity
+                style={styles.pathHeader}
+                onPress={() => handlePathPress(path)}
               >
-                <Image source={{ uri: path.image }} style={styles.pathImage} />
-                <View style={styles.pathContent}>
+                <View>
                   <Text style={styles.pathTitle}>{path.title}</Text>
-                  <View style={styles.pathStats}>
-                    <Text style={styles.pathDuration}>{path.duration}</Text>
-                    <Text style={styles.pathLevel}>{path.level}</Text>
-                  </View>
-                  <Text style={styles.pathCourses}>{path.courses} Courses</Text>
+                  <Text style={styles.pathDescription}>{path.description}</Text>
                 </View>
+                <MaterialIcons
+                  name={expandedPath === path.id ? 'expand-less' : 'expand-more'}
+                  size={24}
+                  color={Colors.PRIMARY}
+                />
               </TouchableOpacity>
-            ))}
-          </ScrollView>
+              {expandedPath === path.id && (
+                <View style={styles.modulesList}>
+                  {path.modules.map(module => (
+                    <TouchableOpacity
+                      key={module.id}
+                      style={styles.moduleItem}
+                      onPress={() => handleModulePress(path.id, module.id, module.title)}
+                    >
+                      <MaterialIcons name="school" size={20} color={Colors.PRIMARY} />
+                      <View style={styles.moduleInfo}>
+                        <Text style={styles.moduleTitle}>{module.title}</Text>
+                        <Text style={styles.moduleDuration}>{module.duration}</Text>
+                      </View>
+                      <MaterialIcons name="chevron-right" size={24} color={Colors.PRIMARY} />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
+          ))}
         </View>
 
         {/* Professional Certifications */}
@@ -1356,46 +1743,51 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  pathImage: {
-    width: '100%',
-    height: 150,
-    resizeMode: 'cover',
-  },
-  pathContent: {
+  pathHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 16,
   },
   pathTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 8,
+    color: '#fff',
+    marginBottom: 4,
   },
-  pathStats: {
-    flexDirection: 'row',
-    marginBottom: 8,
-  },
-  pathDuration: {
-    fontSize: 15,
-    color: Colors.PRIMARY,
-    marginRight: 12,
-    fontWeight: '600',
-  },
-  pathLevel: {
-    fontSize: 15,
-    color: '#e0e0e0',
-    fontWeight: '500',
-  },
-  pathCourses: {
+  pathDescription: {
     fontSize: 14,
     color: '#f0f0f0',
-    opacity: 0.8,
+  },
+  modulesList: {
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  moduleItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  moduleInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  moduleTitle: {
+    fontSize: 16,
+    color: '#fff',
+    marginBottom: 4,
+  },
+  moduleDuration: {
+    fontSize: 14,
+    color: '#888',
   },
   workshopCard: {
-    flexDirection: 'row',
-    backgroundColor: '#232838',
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginBottom: 15,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
   },
   workshopImage: {
     width: 120,
@@ -1437,7 +1829,6 @@ const styles = StyleSheet.create({
   workshopInstructor: {
     fontSize: 14,
     color: Colors.PRIMARY,
-    marginBottom: 4,
   },
   workshopDate: {
     fontSize: 14,
@@ -1681,6 +2072,47 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     marginLeft: 4,
     fontSize: 14,
+    fontWeight: '500',
+  },
+  courseActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  quizButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 255, 149, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  quizText: {
+    color: Colors.PRIMARY,
+    marginLeft: 4,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  categoryCardSelected: {
+    borderWidth: 2,
+    borderColor: Colors.PRIMARY,
+    transform: [{ scale: 1.02 }],
+  },
+  topicsPreview: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    marginTop: 8,
+    gap: 4,
+  },
+  topicChip: {
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  topicChipText: {
+    color: '#000000',
+    fontSize: 12,
     fontWeight: '500',
   },
 }); 
