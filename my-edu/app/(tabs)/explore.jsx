@@ -1,15 +1,18 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Platform, Animated, Image, TextInput, Dimensions, Alert, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Platform, Animated, Image, TextInput, Dimensions, Alert, Modal, ActivityIndicator, BackHandler } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import { MaterialIcons, FontAwesome5, Ionicons, AntDesign } from '@expo/vector-icons';
 import Colors from '../../constants/Colors';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as WebBrowser from 'expo-web-browser';
+import { useNavigation, useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 const isWeb = Platform.OS === 'web';
 
 export default function Explore() {
+  const navigation = useNavigation();
+  const router = useRouter();
   const scrollY = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [selectedFilter, setSelectedFilter] = useState('All');
@@ -18,6 +21,7 @@ export default function Explore() {
   const [currentUrl, setCurrentUrl] = useState('');
   const [webViewTitle, setWebViewTitle] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isExternalContent, setIsExternalContent] = useState(false);
 
   // References to section positions
   const sectionRefs = {
@@ -106,13 +110,44 @@ export default function Explore() {
     }
   ];
 
-  const handleOpenLink = async (url, title) => {
+  // Handle back button press
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      handleBackPress
+    );
+
+    return () => backHandler.remove();
+  }, [isExternalContent]);
+
+  const handleBackPress = () => {
+    if (isExternalContent) {
+      setIsExternalContent(false);
+      return true;
+    }
+    return false;
+  };
+
+  // Enhanced handleOpenLink function
+  const handleOpenLink = async (url, title, type = 'external') => {
     try {
       setIsLoading(true);
+      setIsExternalContent(true);
+
       if (isWeb) {
-        window.open(url, '_blank');
+        // For web platform
+        const newWindow = window.open(url, '_blank');
+        if (newWindow) {
+          newWindow.onclose = () => {
+            setIsExternalContent(false);
+          };
+        }
       } else {
-        await WebBrowser.openBrowserAsync(url);
+        // For mobile platforms
+        const result = await WebBrowser.openBrowserAsync(url);
+        if (result.type === 'cancel' || result.type === 'dismiss') {
+          setIsExternalContent(false);
+        }
       }
     } catch (error) {
       console.error('Error opening URL:', error);
@@ -126,6 +161,43 @@ export default function Explore() {
     }
   };
 
+  // Function to handle success stories
+  const handleStoryPress = (story) => {
+    const storyUrls = {
+      'Michael Chen': 'https://www.linkedin.com/in/example-success-story-1',
+      'Emma Watson': 'https://www.linkedin.com/in/example-success-story-2'
+    };
+    handleOpenLink(storyUrls[story.name], `${story.name}'s Success Story`);
+  };
+
+  // Function to handle event registration
+  const handleEventPress = (event) => {
+    const eventUrls = {
+      'Tech Career Fair 2024': 'https://example.com/tech-career-fair-2024',
+      'Global Coding Challenge': 'https://example.com/coding-challenge-2024'
+    };
+    handleOpenLink(eventUrls[event.title], event.title);
+  };
+
+  // Function to handle certification enrollment
+  const handleCertificationPress = (cert) => {
+    const certUrls = {
+      'Full Stack Developer': 'https://www.techacademy.com/full-stack-certification',
+      'Data Science Specialist': 'https://www.datainstitute.com/data-science-cert'
+    };
+    handleOpenLink(certUrls[cert.title], cert.title);
+  };
+
+  // Function to handle workshop registration
+  const handleWorkshopPress = (workshop) => {
+    const workshopUrls = {
+      'Building AI Applications': 'https://example.com/ai-workshop',
+      'Mastering React Native': 'https://example.com/react-native-workshop'
+    };
+    handleOpenLink(workshopUrls[workshop.title], workshop.title);
+  };
+
+  // Update existing handlers to include navigation
   const handleCategoryPress = (category) => {
     const categoryUrls = {
       'Programming': 'https://www.coursera.org/browse/computer-science/programming',
@@ -135,7 +207,6 @@ export default function Explore() {
       'Science': 'https://www.edx.org/learn/science',
       'Music': 'https://www.coursera.org/browse/arts-and-humanities/music'
     };
-    
     handleOpenLink(categoryUrls[category.title], `${category.title} Courses`);
   };
 
@@ -438,7 +509,7 @@ export default function Explore() {
     isLoading ? (
       <View style={styles.loadingOverlay}>
         <ActivityIndicator size="large" color={Colors.PRIMARY} />
-        <Text style={styles.loadingText}>Opening link...</Text>
+        <Text style={styles.loadingText}>Opening content...</Text>
       </View>
     ) : null
   );
@@ -751,7 +822,11 @@ export default function Explore() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Professional Certifications</Text>
           {certifications.map((cert) => (
-            <TouchableOpacity key={cert.id} style={styles.certCard}>
+            <TouchableOpacity 
+              key={cert.id} 
+              style={styles.certCard}
+              onPress={() => handleCertificationPress(cert)}
+            >
               <Image source={{ uri: cert.image }} style={styles.certImage} />
               <View style={styles.certContent}>
                 <Text style={styles.certTitle}>{cert.title}</Text>
@@ -776,7 +851,11 @@ export default function Explore() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Live Workshops</Text>
           {liveWorkshops.map((workshop) => (
-            <TouchableOpacity key={workshop.id} style={styles.workshopCard}>
+            <TouchableOpacity 
+              key={workshop.id} 
+              style={styles.workshopCard}
+              onPress={() => handleWorkshopPress(workshop)}
+            >
               <Image source={{ uri: workshop.image }} style={styles.workshopImage} />
               <View style={styles.workshopContent}>
                 <View style={styles.liveTag}>
@@ -799,7 +878,11 @@ export default function Explore() {
           <Text style={styles.sectionTitle}>Success Stories</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.storiesScroll}>
             {successStories.map((story) => (
-              <TouchableOpacity key={story.id} style={styles.storyCard}>
+              <TouchableOpacity 
+                key={story.id} 
+                style={styles.storyCard}
+                onPress={() => handleStoryPress(story)}
+              >
                 <Image source={{ uri: story.image }} style={styles.storyImage} />
                 <View style={styles.storyContent}>
                   <Text style={styles.storyName}>{story.name}</Text>
@@ -816,7 +899,11 @@ export default function Explore() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Upcoming Events</Text>
           {upcomingEvents.map((event) => (
-            <TouchableOpacity key={event.id} style={styles.eventCard}>
+            <TouchableOpacity 
+              key={event.id} 
+              style={styles.eventCard}
+              onPress={() => handleEventPress(event)}
+            >
               <Image source={{ uri: event.image }} style={styles.eventImage} />
               <View style={styles.eventContent}>
                 <View style={styles.eventTypeTag}>
@@ -842,6 +929,18 @@ export default function Explore() {
         </View>
       </Animated.ScrollView>
 
+      {/* Back Navigation Button - Shows when viewing external content */}
+      {isExternalContent && !isWeb && (
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => setIsExternalContent(false)}
+        >
+          <MaterialIcons name="arrow-back" size={24} color="#fff" />
+          <Text style={styles.backButtonText}>Back to Explore</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* Loading Overlay */}
       <LoadingOverlay />
     </View>
   );
@@ -1504,13 +1603,21 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
   backButton: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 50 : 20,
+    left: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    zIndex: 1000,
   },
   backButtonText: {
-    color: '#fff',
+    color: '#ffffff',
     fontSize: 16,
+    fontWeight: '600',
     marginLeft: 8,
   },
   webViewTitle: {
