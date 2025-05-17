@@ -1,8 +1,9 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Platform, Animated, Image, TextInput, Dimensions, Linking, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Platform, Animated, Image, TextInput, Dimensions, Linking, Alert, Modal, ActivityIndicator } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import { MaterialIcons, FontAwesome5, Ionicons, AntDesign } from '@expo/vector-icons';
 import Colors from '../../constants/Colors';
 import { LinearGradient } from 'expo-linear-gradient';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 const isWeb = Platform.OS === 'web';
@@ -12,6 +13,10 @@ export default function Explore() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [selectedFilter, setSelectedFilter] = useState('All');
   const scrollViewRef = useRef(null);
+  const [webViewVisible, setWebViewVisible] = useState(false);
+  const [currentUrl, setCurrentUrl] = useState('');
+  const [webViewTitle, setWebViewTitle] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   // References to section positions
   const sectionRefs = {
@@ -100,14 +105,85 @@ export default function Explore() {
     }
   ];
 
-  const handleOpenLink = async (url) => {
-    const supported = await Linking.canOpenURL(url);
-    if (supported) {
-      await Linking.openURL(url);
-    } else {
-      Alert.alert('Error', 'Cannot open this URL');
+  const handleOpenLink = async (url, title) => {
+    try {
+      setIsLoading(true);
+
+      if (isWeb) {
+        // For web platform, open in new tab
+        window.open(url, '_blank');
+      } else {
+        // For native platforms, use Linking API
+        const supported = await Linking.canOpenURL(url);
+        if (supported) {
+          await Linking.openURL(url);
+        } else {
+          Alert.alert(
+            'Error',
+            `Cannot open URL: ${url}`,
+            [{ text: 'OK' }]
+          );
+        }
+      }
+    } catch (error) {
+      if (!isWeb) {
+        Alert.alert(
+          'Error',
+          'Unable to open the link. Please try again later.',
+          [{ text: 'OK' }]
+        );
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  const handleCategoryPress = (category) => {
+    const categoryUrls = {
+      'Programming': 'https://www.coursera.org/browse/computer-science/programming',
+      'Design': 'https://www.coursera.org/browse/arts-and-humanities/design',
+      'Mathematics': 'https://www.khanacademy.org/math',
+      'Languages': 'https://www.duolingo.com',
+      'Science': 'https://www.edx.org/learn/science',
+      'Music': 'https://www.coursera.org/browse/arts-and-humanities/music'
+    };
+    
+    handleOpenLink(categoryUrls[category.title], `${category.title} Courses`);
+  };
+
+  const handleInstructorPress = (instructor) => {
+    const instructorUrls = {
+      'Dr. Angela Yu': 'https://www.udemy.com/user/4b4368a3-b5c8-4529-aa65-2056ec31f37e/',
+      'Prof. Andrew Ng': 'https://www.coursera.org/instructor/andrewng',
+      'Sarah Johnson': 'https://www.linkedin.com/learning/instructors'
+    };
+    
+    handleOpenLink(instructorUrls[instructor.name], `${instructor.name}'s Profile`);
+  };
+
+  const handleLearningPathPress = (path) => {
+    const pathUrls = {
+      'Full-Stack Development': 'https://www.freecodecamp.org/learn/full-stack/',
+      'Data Science': 'https://www.coursera.org/professional-certificates/ibm-data-science'
+    };
+    
+    handleOpenLink(pathUrls[path.title], path.title);
+  };
+
+  const WebViewHeader = () => (
+    <View style={styles.webViewHeader}>
+      <TouchableOpacity 
+        style={styles.backButton} 
+        onPress={() => setWebViewVisible(false)}
+      >
+        <MaterialIcons name="arrow-back" size={24} color="#fff" />
+        <Text style={styles.backButtonText}>Back to Explore</Text>
+      </TouchableOpacity>
+      <Text style={styles.webViewTitle} numberOfLines={1}>
+        {webViewTitle}
+      </Text>
+    </View>
+  );
 
   const featuredCourses = [
     {
@@ -370,6 +446,15 @@ export default function Explore() {
     }
   ];
 
+  const LoadingOverlay = () => (
+    !isWeb && isLoading ? (
+      <View style={styles.loadingOverlay}>
+        <ActivityIndicator size="large" color={Colors.PRIMARY} />
+        <Text style={styles.loadingText}>Opening link...</Text>
+      </View>
+    ) : null
+  );
+
   return (
     <View style={styles.container}>
       <Animated.View style={[styles.header, { height: headerHeight }]}>
@@ -420,13 +505,13 @@ export default function Explore() {
               <TouchableOpacity 
                 key={course.id} 
                 style={styles.featuredCard}
-                onPress={() => handleOpenLink(course.courseUrl)}
+                onPress={() => handleOpenLink(course.courseUrl, course.title)}
               >
                 <View style={styles.courseHeader}>
                   <MaterialIcons name={course.icon} size={40} color={Colors.PRIMARY} />
                   <TouchableOpacity 
                     style={styles.previewButton}
-                    onPress={() => handleOpenLink(course.previewUrl)}
+                    onPress={() => handleOpenLink(course.previewUrl, `${course.title} - Preview`)}
                   >
                     <MaterialIcons name="play-circle-filled" size={24} color={Colors.PRIMARY} />
                     <Text style={styles.previewText}>Watch Preview</Text>
@@ -444,7 +529,7 @@ export default function Explore() {
                       <TouchableOpacity
                         key={index}
                         style={styles.resourceLink}
-                        onPress={() => handleOpenLink(resource.url)}
+                        onPress={() => handleOpenLink(resource.url, resource.title)}
                       >
                         <MaterialIcons name="link" size={16} color={Colors.PRIMARY} />
                         <Text style={styles.resourceText}>{resource.title}</Text>
@@ -476,7 +561,7 @@ export default function Explore() {
               <TouchableOpacity
                 key={platform.id}
                 style={styles.platformCard}
-                onPress={() => handleOpenLink(platform.url)}
+                onPress={() => handleOpenLink(platform.url, platform.name)}
               >
                 <MaterialIcons name={platform.icon} size={32} color={Colors.PRIMARY} />
                 <Text style={styles.platformName}>{platform.name}</Text>
@@ -498,7 +583,7 @@ export default function Explore() {
             <TouchableOpacity
               key={resource.id}
               style={styles.resourceCard}
-              onPress={() => handleOpenLink(resource.url)}
+              onPress={() => handleOpenLink(resource.url, resource.name)}
             >
               <MaterialIcons name={resource.icon} size={32} color={Colors.PRIMARY} />
               <View style={styles.resourceContent}>
@@ -521,7 +606,11 @@ export default function Explore() {
           <Text style={styles.sectionTitle}>Top Instructors</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.instructorsScroll}>
             {topInstructors.map((instructor) => (
-              <TouchableOpacity key={instructor.id} style={styles.instructorCard}>
+              <TouchableOpacity 
+                key={instructor.id} 
+                style={styles.instructorCard}
+                onPress={() => handleInstructorPress(instructor)}
+              >
                 <View style={styles.instructorIconContainer}>
                   <FontAwesome5 name={instructor.icon} size={40} color={Colors.PRIMARY} />
                 </View>
@@ -634,6 +723,7 @@ export default function Explore() {
               <TouchableOpacity 
                 key={category.id} 
                 style={[styles.categoryCard, { backgroundColor: category.backgroundColor }]}
+                onPress={() => handleCategoryPress(category)}
               >
                 <View style={styles.categoryIcon}>
                   {category.icon}
@@ -650,7 +740,11 @@ export default function Explore() {
           <Text style={styles.sectionTitle}>Learning Paths</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pathsScroll}>
             {learningPaths.map((path) => (
-              <TouchableOpacity key={path.id} style={styles.pathCard}>
+              <TouchableOpacity 
+                key={path.id} 
+                style={styles.pathCard}
+                onPress={() => handleLearningPathPress(path)}
+              >
                 <Image source={{ uri: path.image }} style={styles.pathImage} />
                 <View style={styles.pathContent}>
                   <Text style={styles.pathTitle}>{path.title}</Text>
@@ -759,6 +853,8 @@ export default function Explore() {
           ))}
         </View>
       </Animated.ScrollView>
+
+      <LoadingOverlay />
     </View>
   );
 }
@@ -1349,5 +1445,52 @@ const styles = StyleSheet.create({
   topicText: {
     color: Colors.PRIMARY,
     fontSize: 12,
+  },
+  webViewContainer: {
+    flex: 1,
+    backgroundColor: '#1a1f2e',
+  },
+  webViewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#232838',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+  },
+  backButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    marginLeft: 8,
+  },
+  webViewTitle: {
+    flex: 1,
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 16,
+    marginRight: 56, // Balance with back button
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  loadingText: {
+    color: '#fff',
+    marginTop: 10,
+    fontSize: 16,
   },
 }); 
