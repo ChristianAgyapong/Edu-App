@@ -1,12 +1,25 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Platform, Animated } from 'react-native';
-import React, { useEffect, useRef } from 'react';
-import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Platform, Animated, Image, TextInput, Dimensions } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { MaterialIcons, FontAwesome5, Ionicons, AntDesign } from '@expo/vector-icons';
 import Colors from '../../constants/Colors';
+import { LinearGradient } from 'expo-linear-gradient';
 
+const { width } = Dimensions.get('window');
 const isWeb = Platform.OS === 'web';
 
 export default function Explore() {
+  const scrollY = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [selectedFilter, setSelectedFilter] = useState('All');
+  const scrollViewRef = useRef(null);
+
+  // References to section positions
+  const sectionRefs = {
+    Popular: useRef(null),
+    Newest: useRef(null),
+    Trending: useRef(null),
+    'Top Rated': useRef(null),
+  };
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -16,116 +29,301 @@ export default function Explore() {
     }).start();
   }, []);
 
+  const headerHeight = scrollY.interpolate({
+    inputRange: [0, 200],
+    outputRange: [200, 100], // Reduced from 250 to 200 since we removed search bar
+    extrapolate: 'clamp',
+  });
+
+  const filters = ['All', 'Popular', 'Newest', 'Trending', 'Top Rated'];
+
+  const scrollToSection = (filter) => {
+    setSelectedFilter(filter);
+    if (filter === 'All') {
+      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+      return;
+    }
+    
+    const sectionRef = sectionRefs[filter]?.current;
+    if (sectionRef) {
+      sectionRef.measure((x, y, width, height, pageX, pageY) => {
+        scrollViewRef.current?.scrollTo({
+          y: pageY - 100, // Adjust for header height
+          animated: true,
+        });
+      });
+    }
+  };
+
   const categories = [
     {
       id: 1,
-      title: 'Development',
-      icon: <FontAwesome5 name="laptop-code" size={24} color={Colors.PRIMARY} />,
-      courses: 120
+      title: 'Programming',
+      icon: <FontAwesome5 name="laptop-code" size={28} color={Colors.PRIMARY} />,
+      courses: 150,
+      backgroundColor: '#FFE5E5'
     },
     {
       id: 2,
       title: 'Design',
-      icon: <MaterialIcons name="design-services" size={24} color={Colors.PRIMARY} />,
-      courses: 85
+      icon: <MaterialIcons name="design-services" size={28} color={Colors.PRIMARY} />,
+      courses: 120,
+      backgroundColor: '#E5F6FF'
     },
     {
       id: 3,
-      title: 'Business',
-      icon: <MaterialIcons name="business-center" size={24} color={Colors.PRIMARY} />,
-      courses: 95
+      title: 'Mathematics',
+      icon: <FontAwesome5 name="square-root-alt" size={28} color={Colors.PRIMARY} />,
+      courses: 90,
+      backgroundColor: '#E5FFE9'
     },
     {
       id: 4,
-      title: 'Marketing',
-      icon: <MaterialIcons name="trending-up" size={24} color={Colors.PRIMARY} />,
-      courses: 70
+      title: 'Languages',
+      icon: <MaterialIcons name="translate" size={28} color={Colors.PRIMARY} />,
+      courses: 85,
+      backgroundColor: '#F5E6FF'
     },
     {
       id: 5,
-      title: 'Photography',
-      icon: <MaterialIcons name="camera-alt" size={24} color={Colors.PRIMARY} />,
-      courses: 45
+      title: 'Science',
+      icon: <MaterialIcons name="science" size={28} color={Colors.PRIMARY} />,
+      courses: 95,
+      backgroundColor: '#FFE5F6'
     },
     {
       id: 6,
       title: 'Music',
-      icon: <MaterialIcons name="music-note" size={24} color={Colors.PRIMARY} />,
-      courses: 60
+      icon: <MaterialIcons name="music-note" size={28} color={Colors.PRIMARY} />,
+      courses: 70,
+      backgroundColor: '#E5FFF1'
     }
   ];
 
-  const trendingCourses = [
+  const featuredCourses = [
     {
       id: 1,
-      title: 'Complete Web Development 2024',
-      instructor: 'John Smith',
+      title: 'Complete Python Bootcamp 2024',
+      instructor: 'Dr. Angela Yu',
       rating: 4.9,
-      students: '15.5k',
+      students: '255.5k',
       price: '$89.99',
-      image: '💻'
+      image: 'https://img.freepik.com/free-vector/programming-concept-illustration_114360-1351.jpg',
+      tags: ['Bestseller', 'Python', 'Programming']
     },
     {
       id: 2,
-      title: 'UI/UX Design Masterclass',
-      instructor: 'Sarah Johnson',
+      title: 'Advanced Mathematics',
+      instructor: 'Prof. Leonard Smith',
       rating: 4.8,
-      students: '12.3k',
+      students: '125.3k',
       price: '$79.99',
-      image: '🎨'
+      image: 'https://img.freepik.com/free-vector/mathematics-concept-illustration_114360-3972.jpg',
+      tags: ['Popular', 'Mathematics', 'Calculus']
     },
     {
       id: 3,
-      title: 'Digital Marketing Pro',
-      instructor: 'Mike Wilson',
-      rating: 4.7,
-      students: '10.1k',
-      price: '$69.99',
-      image: '📱'
+      title: 'UI/UX Design Masterclass',
+      instructor: 'Sarah Johnson',
+      rating: 4.9,
+      students: '180.1k',
+      price: '$94.99',
+      image: 'https://img.freepik.com/free-vector/design-process-concept-illustration_114360-1437.jpg',
+      tags: ['Trending', 'Design', 'UI/UX']
+    }
+  ];
+
+  const learningPaths = [
+    {
+      id: 1,
+      title: 'Full-Stack Development',
+      duration: '6 months',
+      level: 'Intermediate',
+      courses: 12,
+      image: 'https://img.freepik.com/free-vector/programming-concept-illustration_114360-1213.jpg'
+    },
+    {
+      id: 2,
+      title: 'Data Science',
+      duration: '8 months',
+      level: 'Advanced',
+      courses: 15,
+      image: 'https://img.freepik.com/free-vector/data-analysis-concept-illustration_114360-1481.jpg'
+    }
+  ];
+
+  const liveWorkshops = [
+    {
+      id: 1,
+      title: 'Building AI Applications',
+      date: 'Tomorrow, 2:00 PM',
+      instructor: 'Alex Morgan',
+      participants: 1200,
+      image: 'https://img.freepik.com/free-vector/artificial-intelligence-concept-illustration_114360-1062.jpg'
+    },
+    {
+      id: 2,
+      title: 'Mastering React Native',
+      date: 'Today, 7:00 PM',
+      instructor: 'Emily Chen',
+      participants: 800,
+      image: 'https://img.freepik.com/free-vector/mobile-development-concept-illustration_114360-1363.jpg'
+    }
+  ];
+
+  const topInstructors = [
+    {
+      id: 1,
+      name: 'Dr. Angela Yu',
+      expertise: 'Web Development',
+      students: '1.2M',
+      rating: 4.9,
+      courses: 15,
+      image: 'https://img.freepik.com/free-vector/woman-teacher-standing-near-blackboard_74855-6538.jpg'
+    },
+    {
+      id: 2,
+      name: 'Prof. Andrew Ng',
+      expertise: 'Machine Learning',
+      students: '950K',
+      rating: 4.8,
+      courses: 12,
+      image: 'https://img.freepik.com/free-vector/professor-concept-illustration_114360-4226.jpg'
+    },
+    {
+      id: 3,
+      name: 'Sarah Johnson',
+      expertise: 'UI/UX Design',
+      students: '750K',
+      rating: 4.9,
+      courses: 18,
+      image: 'https://img.freepik.com/free-vector/female-designer-concept-illustration_114360-4088.jpg'
+    }
+  ];
+
+  const certifications = [
+    {
+      id: 1,
+      title: 'Full Stack Developer',
+      provider: 'Tech Academy',
+      duration: '6 months',
+      level: 'Advanced',
+      price: '$499',
+      image: 'https://img.freepik.com/free-vector/programming-concept-illustration_114360-1351.jpg'
+    },
+    {
+      id: 2,
+      title: 'Data Science Specialist',
+      provider: 'Data Institute',
+      duration: '8 months',
+      level: 'Intermediate',
+      price: '$599',
+      image: 'https://img.freepik.com/free-vector/data-analysis-concept-illustration_114360-1481.jpg'
+    }
+  ];
+
+  const successStories = [
+    {
+      id: 1,
+      name: 'Michael Chen',
+      role: 'Software Engineer at Google',
+      story: 'Started as a beginner, now working at my dream company!',
+      image: 'https://img.freepik.com/free-vector/successful-man-concept-illustration_114360-2087.jpg',
+      course: 'Full Stack Development'
+    },
+    {
+      id: 2,
+      name: 'Emma Watson',
+      role: 'UX Designer at Apple',
+      story: 'Changed my career completely in just 6 months!',
+      image: 'https://img.freepik.com/free-vector/successful-woman-concept-illustration_114360-2089.jpg',
+      course: 'UI/UX Design Masterclass'
+    }
+  ];
+
+  const upcomingEvents = [
+    {
+      id: 1,
+      title: 'Tech Career Fair 2024',
+      date: 'Mar 15, 2024',
+      time: '10:00 AM - 4:00 PM',
+      type: 'Virtual',
+      participants: 5000,
+      image: 'https://img.freepik.com/free-vector/job-fair-concept-illustration_114360-1324.jpg'
+    },
+    {
+      id: 2,
+      title: 'Global Coding Challenge',
+      date: 'Mar 20, 2024',
+      time: '9:00 AM - 6:00 PM',
+      type: 'Online',
+      participants: 10000,
+      image: 'https://img.freepik.com/free-vector/programming-concept-illustration_114360-1213.jpg'
     }
   ];
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Explore Courses</Text>
-        <TouchableOpacity style={styles.searchButton}>
-          <MaterialIcons name="search" size={24} color="#fff" />
-        </TouchableOpacity>
-      </View>
+      <Animated.View style={[styles.header, { height: headerHeight }]}>
+        <LinearGradient
+          colors={['#1a1f2e', 'rgba(26, 31, 46, 0.8)']}
+          style={styles.gradient}
+        >
+          <Text style={styles.headerTitle}>Explore Learning</Text>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            style={styles.filterScroll}
+          >
+            {filters.map((filter) => (
+              <TouchableOpacity
+                key={filter}
+                style={[
+                  styles.filterButton,
+                  selectedFilter === filter && styles.filterButtonActive
+                ]}
+                onPress={() => scrollToSection(filter)}
+              >
+                <Text style={[
+                  styles.filterText,
+                  selectedFilter === filter && styles.filterTextActive
+                ]}>{filter}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </LinearGradient>
+      </Animated.View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <Animated.View style={{ opacity: fadeAnim }}>
-          {/* Categories */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Categories</Text>
-            <View style={styles.categoriesGrid}>
-              {categories.map((category) => (
-                <TouchableOpacity key={category.id} style={styles.categoryCard}>
-                  <View style={styles.categoryIcon}>
-                    {category.icon}
+      <Animated.ScrollView
+        ref={scrollViewRef}
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false }
+        )}
+        scrollEventThrottle={16}
+      >
+        {/* Featured Courses */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Featured Courses</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.featuredScroll}>
+            {featuredCourses.map((course) => (
+              <TouchableOpacity key={course.id} style={styles.featuredCard}>
+                <Image source={{ uri: course.image }} style={styles.featuredImage} />
+                <View style={styles.featuredContent}>
+                  <View style={styles.tagContainer}>
+                    {course.tags.map((tag, index) => (
+                      <View key={index} style={styles.tag}>
+                        <Text style={styles.tagText}>{tag}</Text>
+                      </View>
+                    ))}
                   </View>
-                  <Text style={styles.categoryTitle}>{category.title}</Text>
-                  <Text style={styles.categoryCount}>{category.courses} courses</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* Trending Courses */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Trending Now</Text>
-            {trendingCourses.map((course) => (
-              <TouchableOpacity key={course.id} style={styles.courseCard}>
-                <View style={styles.courseImage}>
-                  <Text style={styles.courseEmoji}>{course.image}</Text>
-                </View>
-                <View style={styles.courseInfo}>
-                  <Text style={styles.courseTitle}>{course.title}</Text>
+                  <Text style={styles.featuredTitle}>{course.title}</Text>
                   <Text style={styles.instructorName}>{course.instructor}</Text>
                   <View style={styles.courseStats}>
                     <View style={styles.rating}>
-                      <MaterialIcons name="star" size={16} color={Colors.PRIMARY} />
+                      <MaterialIcons name="star" size={16} color="#FFD700" />
                       <Text style={styles.ratingText}>{course.rating}</Text>
                     </View>
                     <Text style={styles.studentsText}>{course.students} students</Text>
@@ -134,9 +332,269 @@ export default function Explore() {
                 </View>
               </TouchableOpacity>
             ))}
+          </ScrollView>
+        </View>
+
+        {/* Popular Section */}
+        <View ref={sectionRefs.Popular} style={styles.section}>
+          <Text style={styles.sectionTitle}>Popular Courses</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.featuredScroll}>
+            {featuredCourses.filter(course => course.tags.includes('Popular')).map((course) => (
+              <TouchableOpacity key={course.id} style={styles.featuredCard}>
+                <Image source={{ uri: course.image }} style={styles.featuredImage} />
+                <View style={styles.featuredContent}>
+                  <View style={styles.tagContainer}>
+                    {course.tags.map((tag, index) => (
+                      <View key={index} style={styles.tag}>
+                        <Text style={styles.tagText}>{tag}</Text>
+                      </View>
+                    ))}
+                  </View>
+                  <Text style={styles.featuredTitle}>{course.title}</Text>
+                  <Text style={styles.instructorName}>{course.instructor}</Text>
+                  <View style={styles.courseStats}>
+                    <View style={styles.rating}>
+                      <MaterialIcons name="star" size={16} color="#FFD700" />
+                      <Text style={styles.ratingText}>{course.rating}</Text>
+                    </View>
+                    <Text style={styles.studentsText}>{course.students} students</Text>
+                    <Text style={styles.priceText}>{course.price}</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Newest Section */}
+        <View ref={sectionRefs.Newest} style={styles.section}>
+          <Text style={styles.sectionTitle}>Newest Additions</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.featuredScroll}>
+            {/* Add your newest courses here */}
+          </ScrollView>
+        </View>
+
+        {/* Trending Section */}
+        <View ref={sectionRefs.Trending} style={styles.section}>
+          <Text style={styles.sectionTitle}>Trending Now</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.featuredScroll}>
+            {featuredCourses.filter(course => course.tags.includes('Trending')).map((course) => (
+              <TouchableOpacity key={course.id} style={styles.featuredCard}>
+                <Image source={{ uri: course.image }} style={styles.featuredImage} />
+                <View style={styles.featuredContent}>
+                  <View style={styles.tagContainer}>
+                    {course.tags.map((tag, index) => (
+                      <View key={index} style={styles.tag}>
+                        <Text style={styles.tagText}>{tag}</Text>
+                      </View>
+                    ))}
+                  </View>
+                  <Text style={styles.featuredTitle}>{course.title}</Text>
+                  <Text style={styles.instructorName}>{course.instructor}</Text>
+                  <View style={styles.courseStats}>
+                    <View style={styles.rating}>
+                      <MaterialIcons name="star" size={16} color="#FFD700" />
+                      <Text style={styles.ratingText}>{course.rating}</Text>
+                    </View>
+                    <Text style={styles.studentsText}>{course.students} students</Text>
+                    <Text style={styles.priceText}>{course.price}</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Top Rated Section */}
+        <View ref={sectionRefs['Top Rated']} style={styles.section}>
+          <Text style={styles.sectionTitle}>Top Rated Courses</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.featuredScroll}>
+            {featuredCourses.filter(course => course.rating >= 4.8).map((course) => (
+              <TouchableOpacity key={course.id} style={styles.featuredCard}>
+                <Image source={{ uri: course.image }} style={styles.featuredImage} />
+                <View style={styles.featuredContent}>
+                  <View style={styles.tagContainer}>
+                    {course.tags.map((tag, index) => (
+                      <View key={index} style={styles.tag}>
+                        <Text style={styles.tagText}>{tag}</Text>
+                      </View>
+                    ))}
+                  </View>
+                  <Text style={styles.featuredTitle}>{course.title}</Text>
+                  <Text style={styles.instructorName}>{course.instructor}</Text>
+                  <View style={styles.courseStats}>
+                    <View style={styles.rating}>
+                      <MaterialIcons name="star" size={16} color="#FFD700" />
+                      <Text style={styles.ratingText}>{course.rating}</Text>
+                    </View>
+                    <Text style={styles.studentsText}>{course.students} students</Text>
+                    <Text style={styles.priceText}>{course.price}</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Categories */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Browse Categories</Text>
+          <View style={styles.categoriesGrid}>
+            {categories.map((category) => (
+              <TouchableOpacity 
+                key={category.id} 
+                style={[styles.categoryCard, { backgroundColor: category.backgroundColor }]}
+              >
+                <View style={styles.categoryIcon}>
+                  {category.icon}
+                </View>
+                <Text style={styles.categoryTitle}>{category.title}</Text>
+                <Text style={styles.categoryCount}>{category.courses} courses</Text>
+              </TouchableOpacity>
+            ))}
           </View>
-        </Animated.View>
-      </ScrollView>
+        </View>
+
+        {/* Top Instructors Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Top Instructors</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.instructorsScroll}>
+            {topInstructors.map((instructor) => (
+              <TouchableOpacity key={instructor.id} style={styles.instructorCard}>
+                <Image source={{ uri: instructor.image }} style={styles.instructorImage} />
+                <View style={styles.instructorContent}>
+                  <Text style={styles.instructorName}>{instructor.name}</Text>
+                  <Text style={styles.instructorExpertise}>{instructor.expertise}</Text>
+                  <View style={styles.instructorStats}>
+                    <View style={styles.statItem}>
+                      <AntDesign name="user" size={16} color={Colors.PRIMARY} />
+                      <Text style={styles.statText}>{instructor.students}</Text>
+                    </View>
+                    <View style={styles.statItem}>
+                      <AntDesign name="star" size={16} color="#FFD700" />
+                      <Text style={styles.statText}>{instructor.rating}</Text>
+                    </View>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Learning Paths */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Learning Paths</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pathsScroll}>
+            {learningPaths.map((path) => (
+              <TouchableOpacity key={path.id} style={styles.pathCard}>
+                <Image source={{ uri: path.image }} style={styles.pathImage} />
+                <View style={styles.pathContent}>
+                  <Text style={styles.pathTitle}>{path.title}</Text>
+                  <View style={styles.pathStats}>
+                    <Text style={styles.pathDuration}>{path.duration}</Text>
+                    <Text style={styles.pathLevel}>{path.level}</Text>
+                  </View>
+                  <Text style={styles.pathCourses}>{path.courses} Courses</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Professional Certifications */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Professional Certifications</Text>
+          {certifications.map((cert) => (
+            <TouchableOpacity key={cert.id} style={styles.certCard}>
+              <Image source={{ uri: cert.image }} style={styles.certImage} />
+              <View style={styles.certContent}>
+                <Text style={styles.certTitle}>{cert.title}</Text>
+                <Text style={styles.certProvider}>{cert.provider}</Text>
+                <View style={styles.certDetails}>
+                  <View style={styles.certDetail}>
+                    <MaterialIcons name="timer" size={16} color={Colors.PRIMARY} />
+                    <Text style={styles.detailText}>{cert.duration}</Text>
+                  </View>
+                  <View style={styles.certDetail}>
+                    <MaterialIcons name="bar-chart" size={16} color={Colors.PRIMARY} />
+                    <Text style={styles.detailText}>{cert.level}</Text>
+                  </View>
+                </View>
+                <Text style={styles.certPrice}>{cert.price}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Live Workshops */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Live Workshops</Text>
+          {liveWorkshops.map((workshop) => (
+            <TouchableOpacity key={workshop.id} style={styles.workshopCard}>
+              <Image source={{ uri: workshop.image }} style={styles.workshopImage} />
+              <View style={styles.workshopContent}>
+                <View style={styles.liveTag}>
+                  <View style={styles.liveDot} />
+                  <Text style={styles.liveText}>LIVE</Text>
+                </View>
+                <Text style={styles.workshopTitle}>{workshop.title}</Text>
+                <Text style={styles.workshopInstructor}>{workshop.instructor}</Text>
+                <Text style={styles.workshopDate}>{workshop.date}</Text>
+                <Text style={styles.workshopParticipants}>
+                  {workshop.participants} participants
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Success Stories */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Success Stories</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.storiesScroll}>
+            {successStories.map((story) => (
+              <TouchableOpacity key={story.id} style={styles.storyCard}>
+                <Image source={{ uri: story.image }} style={styles.storyImage} />
+                <View style={styles.storyContent}>
+                  <Text style={styles.storyName}>{story.name}</Text>
+                  <Text style={styles.storyRole}>{story.role}</Text>
+                  <Text style={styles.storyCourse}>{story.course}</Text>
+                  <Text style={styles.storyText}>"{story.story}"</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Upcoming Events */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Upcoming Events</Text>
+          {upcomingEvents.map((event) => (
+            <TouchableOpacity key={event.id} style={styles.eventCard}>
+              <Image source={{ uri: event.image }} style={styles.eventImage} />
+              <View style={styles.eventContent}>
+                <View style={styles.eventTypeTag}>
+                  <Text style={styles.eventTypeText}>{event.type}</Text>
+                </View>
+                <Text style={styles.eventTitle}>{event.title}</Text>
+                <View style={styles.eventDetails}>
+                  <View style={styles.eventDetail}>
+                    <MaterialIcons name="event" size={16} color={Colors.PRIMARY} />
+                    <Text style={styles.eventDetailText}>{event.date}</Text>
+                  </View>
+                  <View style={styles.eventDetail}>
+                    <MaterialIcons name="access-time" size={16} color={Colors.PRIMARY} />
+                    <Text style={styles.eventDetailText}>{event.time}</Text>
+                  </View>
+                </View>
+                <Text style={styles.eventParticipants}>
+                  {event.participants.toLocaleString()} participants registered
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </Animated.ScrollView>
     </View>
   );
 }
@@ -147,38 +605,123 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1f2e',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    paddingTop: isWeb ? 40 : 20,
-    backgroundColor: '#232838',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1,
+    backgroundColor: '#1a1f2e',
+  },
+  gradient: {
+    flex: 1,
+    paddingTop: isWeb ? 40 : 60,
+    paddingHorizontal: 20,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  searchButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  content: {
-    flex: 1,
-    padding: 20,
-  },
-  section: {
-    marginBottom: 30,
-  },
-  sectionTitle: {
-    fontSize: 20,
+    fontSize: 32,
     fontWeight: 'bold',
     color: '#fff',
     marginBottom: 20,
+  },
+  filterScroll: {
+    marginTop: 10,
+  },
+  filterButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginRight: 10,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  filterButtonActive: {
+    backgroundColor: Colors.PRIMARY,
+  },
+  filterText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  filterTextActive: {
+    color: '#000',
+  },
+  content: {
+    flex: 1,
+    paddingTop: 200, // Adjusted from 250 to 200
+  },
+  section: {
+    marginBottom: 30,
+    paddingHorizontal: 20,
+  },
+  sectionTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 20,
+  },
+  featuredScroll: {
+    marginLeft: -20,
+    paddingLeft: 20,
+  },
+  featuredCard: {
+    width: isWeb ? 400 : width - 60,
+    marginRight: 20,
+    backgroundColor: '#232838',
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  featuredImage: {
+    width: '100%',
+    height: 200,
+    resizeMode: 'cover',
+  },
+  featuredContent: {
+    padding: 16,
+  },
+  tagContainer: {
+    flexDirection: 'row',
+    marginBottom: 10,
+  },
+  tag: {
+    backgroundColor: Colors.PRIMARY,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginRight: 8,
+  },
+  tagText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  featuredTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 8,
+  },
+  instructorName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  instructorExpertise: {
+    fontSize: 14,
+    color: Colors.PRIMARY,
+    marginBottom: 8,
+  },
+  instructorStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statText: {
+    marginLeft: 4,
+    color: '#fff',
+    fontSize: 14,
   },
   categoriesGrid: {
     flexDirection: 'row',
@@ -188,17 +731,15 @@ const styles = StyleSheet.create({
   },
   categoryCard: {
     width: isWeb ? '31%' : '47%',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 16,
+    padding: 20,
     alignItems: 'center',
-    marginBottom: 15,
   },
   categoryIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(0, 255, 149, 0.1)',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -206,71 +747,273 @@ const styles = StyleSheet.create({
   categoryTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#000',
     marginBottom: 4,
   },
   categoryCount: {
     fontSize: 14,
+    color: '#666',
+  },
+  pathsScroll: {
+    marginLeft: -20,
+    paddingLeft: 20,
+  },
+  pathCard: {
+    width: isWeb ? 300 : width - 100,
+    marginRight: 20,
+    backgroundColor: '#232838',
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  pathImage: {
+    width: '100%',
+    height: 150,
+    resizeMode: 'cover',
+  },
+  pathContent: {
+    padding: 16,
+  },
+  pathTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 8,
+  },
+  pathStats: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  pathDuration: {
+    fontSize: 14,
+    color: Colors.PRIMARY,
+    marginRight: 12,
+  },
+  pathLevel: {
+    fontSize: 14,
+    color: '#f0f0f0',
+  },
+  pathCourses: {
+    fontSize: 14,
     color: '#f0f0f0',
     opacity: 0.8,
   },
-  courseCard: {
+  workshopCard: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    backgroundColor: '#232838',
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 15,
   },
-  courseImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    backgroundColor: 'rgba(0, 255, 149, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
+  workshopImage: {
+    width: 120,
+    height: 120,
+    resizeMode: 'cover',
   },
-  courseEmoji: {
-    fontSize: 32,
-  },
-  courseInfo: {
+  workshopContent: {
     flex: 1,
+    padding: 16,
   },
-  courseTitle: {
+  liveTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 59, 48, 0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#FF3B30',
+    marginRight: 4,
+  },
+  liveText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#FF3B30',
+  },
+  workshopTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#fff',
     marginBottom: 4,
   },
-  instructorName: {
+  workshopInstructor: {
+    fontSize: 14,
+    color: Colors.PRIMARY,
+    marginBottom: 4,
+  },
+  workshopDate: {
+    fontSize: 14,
+    color: '#f0f0f0',
+    marginBottom: 4,
+  },
+  workshopParticipants: {
     fontSize: 14,
     color: '#f0f0f0',
     opacity: 0.8,
+  },
+  instructorsScroll: {
+    marginLeft: -20,
+    paddingLeft: 20,
+  },
+  instructorCard: {
+    width: isWeb ? 300 : width - 100,
+    marginRight: 20,
+    backgroundColor: '#232838',
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  instructorImage: {
+    width: '100%',
+    height: 180,
+    resizeMode: 'cover',
+  },
+  instructorContent: {
+    padding: 16,
+  },
+  certCard: {
+    flexDirection: 'row',
+    backgroundColor: '#232838',
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 15,
+  },
+  certImage: {
+    width: 120,
+    height: 120,
+    resizeMode: 'cover',
+  },
+  certContent: {
+    flex: 1,
+    padding: 16,
+  },
+  certTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  certProvider: {
+    fontSize: 14,
+    color: Colors.PRIMARY,
     marginBottom: 8,
   },
-  courseStats: {
+  certDetails: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  certDetail: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    marginRight: 16,
   },
-  rating: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  ratingText: {
-    color: Colors.PRIMARY,
+  detailText: {
     marginLeft: 4,
+    color: '#fff',
     fontSize: 14,
+  },
+  certPrice: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.PRIMARY,
+  },
+  storiesScroll: {
+    marginLeft: -20,
+    paddingLeft: 20,
+  },
+  storyCard: {
+    width: isWeb ? 350 : width - 80,
+    marginRight: 20,
+    backgroundColor: '#232838',
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  storyImage: {
+    width: '100%',
+    height: 200,
+    resizeMode: 'cover',
+  },
+  storyContent: {
+    padding: 16,
+  },
+  storyName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  storyRole: {
+    fontSize: 14,
+    color: Colors.PRIMARY,
+    marginBottom: 4,
+  },
+  storyCourse: {
+    fontSize: 14,
+    color: '#f0f0f0',
+    marginBottom: 8,
+  },
+  storyText: {
+    fontSize: 14,
+    color: '#fff',
+    fontStyle: 'italic',
+    lineHeight: 20,
+  },
+  eventCard: {
+    flexDirection: 'row',
+    backgroundColor: '#232838',
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 15,
+  },
+  eventImage: {
+    width: 120,
+    height: 120,
+    resizeMode: 'cover',
+  },
+  eventContent: {
+    flex: 1,
+    padding: 16,
+  },
+  eventTypeTag: {
+    backgroundColor: 'rgba(0, 255, 149, 0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+  },
+  eventTypeText: {
+    color: Colors.PRIMARY,
+    fontSize: 12,
     fontWeight: 'bold',
   },
-  studentsText: {
+  eventTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 8,
+  },
+  eventDetails: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  eventDetail: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  eventDetailText: {
+    marginLeft: 4,
+    color: '#fff',
+    fontSize: 14,
+  },
+  eventParticipants: {
     fontSize: 14,
     color: '#f0f0f0',
     opacity: 0.8,
-  },
-  priceText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: Colors.PRIMARY,
   },
 }); 
