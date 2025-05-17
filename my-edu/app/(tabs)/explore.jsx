@@ -522,6 +522,9 @@ export default function Explore() {
           style={styles.gradient}
         >
           <Text style={styles.headerTitle}>Explore Learning</Text>
+          <Text style={styles.headerSubtitle}>
+            Discover courses, workshops, and resources to enhance your skills
+          </Text>
           <ScrollView 
             horizontal 
             showsHorizontalScrollIndicator={false}
@@ -965,32 +968,48 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   headerTitle: {
-    fontSize: 32,
+    fontSize: 36,
     fontWeight: 'bold',
     color: '#ffffff',
-    marginBottom: 20,
+    marginBottom: 10,
     textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+    letterSpacing: 0.5,
+  },
+  headerSubtitle: {
+    fontSize: 18,
+    color: '#e0e0e0',
+    marginBottom: 20,
+    lineHeight: 24,
+    fontWeight: '500',
   },
   filterScroll: {
-    marginTop: 10,
+    marginTop: 15,
   },
   filterButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginRight: 10,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    marginRight: 12,
     borderRadius: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
   filterButtonActive: {
     backgroundColor: Colors.PRIMARY,
     borderColor: Colors.PRIMARY,
+    shadowColor: Colors.PRIMARY,
+    shadowOpacity: 0.4,
   },
   filterText: {
     color: '#ffffff',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
+    letterSpacing: 0.5,
   },
   filterTextActive: {
     color: '#000000',
