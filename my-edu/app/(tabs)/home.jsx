@@ -5,10 +5,12 @@ import { Link, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import Colors from '../../constants/Colors';
+import Layout from '../../constants/Layout';
+import ResponsiveContainer from '../../components/ResponsiveContainer';
 
 const isWeb = Platform.OS === 'web';
 const { width, height } = Dimensions.get('window');
-const CARD_WIDTH = width * 0.85;
+const CARD_WIDTH = Layout.isWeb ? Math.min(width * 0.85, 400) : width * 0.85;
 
 // Helper function for haptic feedback
 const triggerHaptic = async () => {
@@ -451,348 +453,360 @@ export default function Home() {
   };
 
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={['#232838', '#1a1f2e']}
-        style={styles.header}
-      >
-        <View style={styles.headerLeft}>
-          <Animated.View style={[styles.logoContainer, { transform: [{ scale: headerScaleAnim }] }]}>
-            <View style={styles.logoBackground}>
-              <FontAwesome5 name="graduation-cap" size={24} color={Colors.PRIMARY} />
-            </View>
-          </Animated.View>
-          <View style={styles.headerText}>
-            <Text style={styles.greeting}>Welcome back!</Text>
-            <Text style={styles.userName}>John Doe</Text>
-          </View>
-        </View>
-        <View style={styles.headerRight}>
-          <TouchableOpacity 
-            style={styles.iconButton}
-            onPress={() => handlePress('search')}
-          >
-            <MaterialIcons name="search" size={24} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.iconButton}
-            onPress={() => handlePress('notifications')}
-          >
-            <MaterialIcons name="notifications" size={24} color="#fff" />
-            <Animated.View 
-              style={[
-                styles.notificationBadge,
-                { transform: [{ rotate: headerRotate }] }
-              ]} 
-            />
-          </TouchableOpacity>
-        </View>
-      </LinearGradient>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <Animated.View style={[{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-          {/* Quick Actions */}
-          <View style={styles.quickActionsContainer}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Quick Actions</Text>
-            </View>
-            <View style={styles.quickActionsGrid}>
-              {quickActions.map((action) => (
-                <TouchableOpacity
-                  key={action.id}
-                  style={styles.quickActionCard}
-                  onPress={() => {
-                    handlePress(action.route);
-                  }}
-                >
-                  <Animated.View
-                    style={[
-                      styles.quickActionIcon,
-                      { backgroundColor: action.color }
-                    ]}
-                  >
-                    <Feather name={action.icon} size={24} color="#fff" />
-                  </Animated.View>
-                  <Text style={styles.quickActionTitle}>{action.title}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* Featured Carousel */}
-          <View style={styles.carouselContainer}>
-            <FlatList
-              data={carouselData}
-              renderItem={renderCarouselItem}
-              keyExtractor={(item) => item.id.toString()}
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              onScroll={Animated.event(
-                [{ nativeEvent: { contentOffset: { x: carouselScrollX } } }],
-                { useNativeDriver: true }
-              )}
-            />
-            <View style={styles.paginationDots}>
-              {carouselData.map((_, index) => {
-                const inputRange = [
-                  (index - 1) * width,
-                  index * width,
-                  (index + 1) * width
-                ];
-
-                const dotWidth = carouselScrollX.interpolate({
-                  inputRange,
-                  outputRange: [8, 16, 8],
-                  extrapolate: 'clamp'
-                });
-
-                const opacity = carouselScrollX.interpolate({
-                  inputRange,
-                  outputRange: [0.5, 1, 0.5],
-                  extrapolate: 'clamp'
-                });
-
-                return (
-                  <Animated.View
-                    key={index}
-                    style={[
-                      styles.dot,
-                      { width: dotWidth, opacity }
-                    ]}
-                  />
-                );
-              })}
-            </View>
-          </View>
-
-          {/* Learning Stats */}
-          <View style={styles.statsContainer}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {learningStats.map((stat) => (
-                <View key={stat.id} style={styles.statCard}>
-                  <MaterialIcons name={stat.icon} size={24} color={Colors.PRIMARY} />
-                  <Text style={styles.statValue}>{stat.value}</Text>
-                  <Text style={styles.statTitle}>{stat.title}</Text>
-                  <View style={[styles.trendBadge, { backgroundColor: stat.trendUp ? '#4CAF50' : '#FF5252' }]}>
-                    <Text style={styles.trendText}>{stat.trend}</Text>
-                  </View>
+    <ResponsiveContainer>
+      <View style={styles.container}>
+        <LinearGradient
+          colors={['#232838', '#1a1f2e']}
+          style={[styles.header, { height: Layout.header.height + Layout.header.paddingTop }]}
+        >
+          <View style={[styles.headerContent, { paddingTop: Layout.header.paddingTop }]}>
+            <View style={styles.headerLeft}>
+              <Animated.View style={[styles.logoContainer, { transform: [{ scale: headerScaleAnim }] }]}>
+                <View style={styles.logoBackground}>
+                  <FontAwesome5 name="graduation-cap" size={24} color={Colors.PRIMARY} />
                 </View>
-              ))}
-            </ScrollView>
-          </View>
-
-          {/* Categories */}
-          <View style={styles.categoriesContainer}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {categories.map((category) => (
-                <TouchableOpacity
-                  key={category}
+              </Animated.View>
+              <View style={styles.headerText}>
+                <Text style={styles.greeting}>Welcome back!</Text>
+                <Text style={styles.userName}>John Doe</Text>
+              </View>
+            </View>
+            <View style={styles.headerRight}>
+              <TouchableOpacity 
+                style={styles.iconButton}
+                onPress={() => handlePress('search')}
+              >
+                <MaterialIcons name="search" size={24} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.iconButton}
+                onPress={() => handlePress('notifications')}
+              >
+                <MaterialIcons name="notifications" size={24} color="#fff" />
+                <Animated.View 
                   style={[
-                    styles.categoryButton,
-                    selectedCategory === category && styles.categoryButtonActive
-                  ]}
-                  onPress={() => setSelectedCategory(category)}
-                >
-                  <Text style={[
-                    styles.categoryText,
-                    selectedCategory === category && styles.categoryTextActive
-                  ]}>{category}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-
-          {/* Courses */}
-          <View style={styles.coursesContainer}>
-            <FlatList
-              data={courses}
-              renderItem={renderCourseCard}
-              keyExtractor={(item) => item.id.toString()}
-              scrollEnabled={false}
-            />
-          </View>
-
-          {/* Upcoming Deadlines */}
-          <View style={styles.deadlinesContainer}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Upcoming Deadlines</Text>
-              <TouchableOpacity>
-                <Text style={styles.seeAllText}>See All</Text>
+                    styles.notificationBadge,
+                    { transform: [{ rotate: headerRotate }] }
+                  ]} 
+                />
               </TouchableOpacity>
             </View>
-            {upcomingDeadlines.map((deadline) => (
-              <Animated.View
-                key={deadline.id}
-                style={[styles.deadlineCard, { transform: [{ scale: scaleAnim }] }]}
-              >
-                <LinearGradient
-                  colors={
-                    deadline.priority === 'high'
-                      ? ['#FF5252', '#FF1744']
-                      : ['#FFA726', '#FB8C00']
-                  }
-                  style={styles.deadlinePriorityIndicator}
-                />
-                <View style={styles.deadlineContent}>
-                  <Text style={styles.deadlineTitle}>{deadline.title}</Text>
-                  <View style={styles.deadlineInfo}>
-                    <View style={styles.deadlineProgress}>
+          </View>
+        </LinearGradient>
+
+        <ScrollView 
+          style={styles.content} 
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.contentContainer}
+        >
+          <Animated.View style={[{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+            {/* Quick Actions */}
+            <View style={styles.quickActionsContainer}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Quick Actions</Text>
+              </View>
+              <View style={[
+                styles.quickActionsGrid,
+                Layout.isWeb && styles.webQuickActionsGrid
+              ]}>
+                {quickActions.map((action) => (
+                  <TouchableOpacity
+                    key={action.id}
+                    style={[
+                      styles.quickActionCard,
+                      Layout.isWeb && styles.webQuickActionCard
+                    ]}
+                    onPress={() => handlePress(action.route)}
+                  >
+                    <Animated.View
+                      style={[
+                        styles.quickActionIcon,
+                        { backgroundColor: action.color }
+                      ]}
+                    >
+                      <Feather name={action.icon} size={24} color="#fff" />
+                    </Animated.View>
+                    <Text style={styles.quickActionTitle}>{action.title}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Featured Carousel */}
+            <View style={styles.carouselContainer}>
+              <FlatList
+                data={carouselData}
+                renderItem={renderCarouselItem}
+                keyExtractor={(item) => item.id.toString()}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onScroll={Animated.event(
+                  [{ nativeEvent: { contentOffset: { x: carouselScrollX } } }],
+                  { useNativeDriver: true }
+                )}
+              />
+              <View style={styles.paginationDots}>
+                {carouselData.map((_, index) => {
+                  const inputRange = [
+                    (index - 1) * width,
+                    index * width,
+                    (index + 1) * width
+                  ];
+
+                  const dotWidth = carouselScrollX.interpolate({
+                    inputRange,
+                    outputRange: [8, 16, 8],
+                    extrapolate: 'clamp'
+                  });
+
+                  const opacity = carouselScrollX.interpolate({
+                    inputRange,
+                    outputRange: [0.5, 1, 0.5],
+                    extrapolate: 'clamp'
+                  });
+
+                  return (
+                    <Animated.View
+                      key={index}
+                      style={[
+                        styles.dot,
+                        { width: dotWidth, opacity }
+                      ]}
+                    />
+                  );
+                })}
+              </View>
+            </View>
+
+            {/* Learning Stats */}
+            <View style={styles.statsContainer}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {learningStats.map((stat) => (
+                  <View key={stat.id} style={styles.statCard}>
+                    <MaterialIcons name={stat.icon} size={24} color={Colors.PRIMARY} />
+                    <Text style={styles.statValue}>{stat.value}</Text>
+                    <Text style={styles.statTitle}>{stat.title}</Text>
+                    <View style={[styles.trendBadge, { backgroundColor: stat.trendUp ? '#4CAF50' : '#FF5252' }]}>
+                      <Text style={styles.trendText}>{stat.trend}</Text>
+                    </View>
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+
+            {/* Categories */}
+            <View style={styles.categoriesContainer}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {categories.map((category) => (
+                  <TouchableOpacity
+                    key={category}
+                    style={[
+                      styles.categoryButton,
+                      selectedCategory === category && styles.categoryButtonActive
+                    ]}
+                    onPress={() => setSelectedCategory(category)}
+                  >
+                    <Text style={[
+                      styles.categoryText,
+                      selectedCategory === category && styles.categoryTextActive
+                    ]}>{category}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
+            {/* Courses */}
+            <View style={styles.coursesContainer}>
+              <FlatList
+                data={courses}
+                renderItem={renderCourseCard}
+                keyExtractor={(item) => item.id.toString()}
+                scrollEnabled={false}
+              />
+            </View>
+
+            {/* Upcoming Deadlines */}
+            <View style={styles.deadlinesContainer}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Upcoming Deadlines</Text>
+                <TouchableOpacity>
+                  <Text style={styles.seeAllText}>See All</Text>
+                </TouchableOpacity>
+              </View>
+              {upcomingDeadlines.map((deadline) => (
+                <Animated.View
+                  key={deadline.id}
+                  style={[styles.deadlineCard, { transform: [{ scale: scaleAnim }] }]}
+                >
+                  <LinearGradient
+                    colors={
+                      deadline.priority === 'high'
+                        ? ['#FF5252', '#FF1744']
+                        : ['#FFA726', '#FB8C00']
+                    }
+                    style={styles.deadlinePriorityIndicator}
+                  />
+                  <View style={styles.deadlineContent}>
+                    <Text style={styles.deadlineTitle}>{deadline.title}</Text>
+                    <View style={styles.deadlineInfo}>
+                      <View style={styles.deadlineProgress}>
+                        <View style={styles.progressBar}>
+                          <View
+                            style={[
+                              styles.progressFill,
+                              { width: `${deadline.progress}%` }
+                            ]}
+                          />
+                        </View>
+                        <Text style={styles.progressText}>{deadline.progress}%</Text>
+                      </View>
+                      <View style={styles.deadlineTimeRemaining}>
+                        <MaterialIcons name="access-time" size={16} color={Colors.PRIMARY} />
+                        <Text style={styles.deadlineTimeText}>
+                          {getDaysRemaining(deadline.dueDate)} days left
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                </Animated.View>
+              ))}
+            </View>
+
+            {/* Learning Paths */}
+            <View style={styles.learningPathsContainer}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Learning Paths</Text>
+                <TouchableOpacity>
+                  <Text style={styles.seeAllText}>See All</Text>
+                </TouchableOpacity>
+              </View>
+              {learningPaths.map((path) => (
+                <Animated.View
+                  key={path.id}
+                  style={[styles.learningPathCard, { transform: [{ scale: scaleAnim }] }]}
+                >
+                  <View style={styles.pathIcon}>
+                    <MaterialIcons name={path.icon} size={24} color={Colors.PRIMARY} />
+                  </View>
+                  <View style={styles.pathInfo}>
+                    <Text style={styles.pathTitle}>{path.title}</Text>
+                    <View style={styles.progressContainer}>
                       <View style={styles.progressBar}>
                         <View
                           style={[
                             styles.progressFill,
-                            { width: `${deadline.progress}%` }
+                            { width: `${path.progress}%` }
                           ]}
                         />
                       </View>
-                      <Text style={styles.progressText}>{deadline.progress}%</Text>
-                    </View>
-                    <View style={styles.deadlineTimeRemaining}>
-                      <MaterialIcons name="access-time" size={16} color={Colors.PRIMARY} />
-                      <Text style={styles.deadlineTimeText}>
-                        {getDaysRemaining(deadline.dueDate)} days left
-                      </Text>
+                      <Text style={styles.progressText}>{path.progress}%</Text>
                     </View>
                   </View>
-                </View>
-              </Animated.View>
-            ))}
-          </View>
-
-          {/* Learning Paths */}
-          <View style={styles.learningPathsContainer}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Learning Paths</Text>
-              <TouchableOpacity>
-                <Text style={styles.seeAllText}>See All</Text>
-              </TouchableOpacity>
+                </Animated.View>
+              ))}
             </View>
-            {learningPaths.map((path) => (
-              <Animated.View
-                key={path.id}
-                style={[styles.learningPathCard, { transform: [{ scale: scaleAnim }] }]}
-              >
-                <View style={styles.pathIcon}>
-                  <MaterialIcons name={path.icon} size={24} color={Colors.PRIMARY} />
-                </View>
-                <View style={styles.pathInfo}>
-                  <Text style={styles.pathTitle}>{path.title}</Text>
-                  <View style={styles.progressContainer}>
-                    <View style={styles.progressBar}>
-                      <View
-                        style={[
-                          styles.progressFill,
-                          { width: `${path.progress}%` }
-                        ]}
-                      />
-                    </View>
-                    <Text style={styles.progressText}>{path.progress}%</Text>
-                  </View>
-                </View>
-              </Animated.View>
-            ))}
-          </View>
 
-          {/* Weekly Goals */}
-          <View style={styles.weeklyGoalsContainer}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Weekly Goals</Text>
-              <TouchableOpacity>
-                <Text style={styles.seeAllText}>See All</Text>
-              </TouchableOpacity>
-            </View>
-            {weeklyGoals.map((goal) => (
-              <Animated.View
-                key={goal.id}
-                style={[styles.goalCard, { transform: [{ scale: scaleAnim }] }]}
-              >
-                <View style={styles.goalIcon}>
-                  <MaterialIcons name={goal.icon} size={24} color={Colors.PRIMARY} />
-                </View>
-                <View style={styles.goalInfo}>
-                  <Text style={styles.goalTitle}>{goal.title}</Text>
-                  <Text style={styles.goalDescription}>{goal.current} {goal.unit} / {goal.target} {goal.unit}</Text>
-                </View>
-              </Animated.View>
-            ))}
-          </View>
-
-          {/* Achievements */}
-          <View style={styles.achievementsContainer}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Recent Achievements</Text>
-              <TouchableOpacity>
-                <Text style={styles.seeAllText}>See All</Text>
-              </TouchableOpacity>
-            </View>
-            {achievements.map((achievement) => (
-              <Animated.View
-                key={achievement.id}
-                style={[styles.achievementCard, { transform: [{ scale: scaleAnim }] }]}
-              >
-                <View style={styles.achievementIcon}>
-                  <MaterialIcons name={achievement.icon} size={24} color={Colors.PRIMARY} />
-                </View>
-                <View style={styles.achievementInfo}>
-                  <Text style={styles.achievementTitle}>{achievement.title}</Text>
-                  <Text style={styles.achievementDescription}>{achievement.description}</Text>
-                  <View style={styles.achievementProgress}>
-                    <View style={styles.progressBar}>
-                      <View
-                        style={[
-                          styles.progressFill,
-                          { width: `${achievement.progress}%` }
-                        ]}
-                      />
-                    </View>
-                    <Text style={styles.progressText}>{achievement.progress}%</Text>
-                  </View>
-                </View>
-              </Animated.View>
-            ))}
-          </View>
-
-          {/* Study Streak */}
-          <View style={styles.streakContainer}>
-            <LinearGradient
-              colors={['#FF6B6B', '#FF8E53']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.streakCard}
-            >
-              {renderStreakFlame()}
-              <View style={styles.streakContent}>
-                <Text style={styles.streakTitle}>Study Streak</Text>
-                <Text style={styles.streakCount}>{currentStreak} Days</Text>
-                <View style={styles.streakInfo}>
-                  <View style={styles.streakStat}>
-                    <Text style={styles.streakLabel}>Current</Text>
-                    <Text style={styles.streakValue}>{currentStreak} days</Text>
-                  </View>
-                  <View style={styles.streakDivider} />
-                  <View style={styles.streakStat}>
-                    <Text style={styles.streakLabel}>Longest</Text>
-                    <Text style={styles.streakValue}>{longestStreak} days</Text>
-                  </View>
-                </View>
-                <TouchableOpacity 
-                  style={styles.streakButton}
-                  onPress={() => handlePress('viewProgress')}
-                >
-                  <Text style={styles.streakButtonText}>View Progress</Text>
+            {/* Weekly Goals */}
+            <View style={styles.weeklyGoalsContainer}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Weekly Goals</Text>
+                <TouchableOpacity>
+                  <Text style={styles.seeAllText}>See All</Text>
                 </TouchableOpacity>
               </View>
+              {weeklyGoals.map((goal) => (
+                <Animated.View
+                  key={goal.id}
+                  style={[styles.goalCard, { transform: [{ scale: scaleAnim }] }]}
+                >
+                  <View style={styles.goalIcon}>
+                    <MaterialIcons name={goal.icon} size={24} color={Colors.PRIMARY} />
+                  </View>
+                  <View style={styles.goalInfo}>
+                    <Text style={styles.goalTitle}>{goal.title}</Text>
+                    <Text style={styles.goalDescription}>{goal.current} {goal.unit} / {goal.target} {goal.unit}</Text>
+                  </View>
+                </Animated.View>
+              ))}
+            </View>
 
-              {/* Decorative Elements */}
-              <View style={[styles.decorativeCircle, styles.circle1]} />
-              <View style={[styles.decorativeCircle, styles.circle2]} />
-              <View style={[styles.decorativeCircle, styles.circle3]} />
-            </LinearGradient>
-          </View>
-        </Animated.View>
-      </ScrollView>
-    </View>
+            {/* Achievements */}
+            <View style={styles.achievementsContainer}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Recent Achievements</Text>
+                <TouchableOpacity>
+                  <Text style={styles.seeAllText}>See All</Text>
+                </TouchableOpacity>
+              </View>
+              {achievements.map((achievement) => (
+                <Animated.View
+                  key={achievement.id}
+                  style={[styles.achievementCard, { transform: [{ scale: scaleAnim }] }]}
+                >
+                  <View style={styles.achievementIcon}>
+                    <MaterialIcons name={achievement.icon} size={24} color={Colors.PRIMARY} />
+                  </View>
+                  <View style={styles.achievementInfo}>
+                    <Text style={styles.achievementTitle}>{achievement.title}</Text>
+                    <Text style={styles.achievementDescription}>{achievement.description}</Text>
+                    <View style={styles.achievementProgress}>
+                      <View style={styles.progressBar}>
+                        <View
+                          style={[
+                            styles.progressFill,
+                            { width: `${achievement.progress}%` }
+                          ]}
+                        />
+                      </View>
+                      <Text style={styles.progressText}>{achievement.progress}%</Text>
+                    </View>
+                  </View>
+                </Animated.View>
+              ))}
+            </View>
+
+            {/* Study Streak */}
+            <View style={styles.streakContainer}>
+              <LinearGradient
+                colors={['#FF6B6B', '#FF8E53']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.streakCard}
+              >
+                {renderStreakFlame()}
+                <View style={styles.streakContent}>
+                  <Text style={styles.streakTitle}>Study Streak</Text>
+                  <Text style={styles.streakCount}>{currentStreak} Days</Text>
+                  <View style={styles.streakInfo}>
+                    <View style={styles.streakStat}>
+                      <Text style={styles.streakLabel}>Current</Text>
+                      <Text style={styles.streakValue}>{currentStreak} days</Text>
+                    </View>
+                    <View style={styles.streakDivider} />
+                    <View style={styles.streakStat}>
+                      <Text style={styles.streakLabel}>Longest</Text>
+                      <Text style={styles.streakValue}>{longestStreak} days</Text>
+                    </View>
+                  </View>
+                  <TouchableOpacity 
+                    style={styles.streakButton}
+                    onPress={() => handlePress('viewProgress')}
+                  >
+                    <Text style={styles.streakButtonText}>View Progress</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Decorative Elements */}
+                <View style={[styles.decorativeCircle, styles.circle1]} />
+                <View style={[styles.decorativeCircle, styles.circle2]} />
+                <View style={[styles.decorativeCircle, styles.circle3]} />
+              </LinearGradient>
+            </View>
+          </Animated.View>
+        </ScrollView>
+      </View>
+    </ResponsiveContainer>
   );
 }
 
@@ -802,11 +816,38 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1f2e',
   },
   header: {
+    width: '100%',
+  },
+  headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
-    paddingTop: isWeb ? 40 : 20,
+    paddingHorizontal: Layout.padding.large,
+  },
+  contentContainer: {
+    flexGrow: 1,
+    paddingBottom: Layout.bottomTabHeight,
+  },
+  quickActionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginTop: Layout.padding.medium,
+  },
+  webQuickActionsGrid: {
+    justifyContent: 'flex-start',
+    marginHorizontal: -Layout.padding.medium,
+  },
+  quickActionCard: {
+    width: '48%',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: Layout.borderRadius.large,
+    padding: Layout.padding.large,
+    marginBottom: Layout.padding.large,
+  },
+  webQuickActionCard: {
+    width: 200,
+    marginHorizontal: Layout.padding.medium,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -1192,19 +1233,12 @@ const styles = StyleSheet.create({
   quickActionsContainer: {
     padding: 20,
   },
-  quickActionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginTop: 10,
-  },
   quickActionCard: {
     width: '48%',
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    alignItems: 'center',
+    borderRadius: Layout.borderRadius.large,
+    padding: Layout.padding.large,
+    marginBottom: Layout.padding.large,
   },
   quickActionIcon: {
     width: 48,

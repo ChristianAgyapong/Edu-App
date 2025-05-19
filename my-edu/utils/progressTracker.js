@@ -1,4 +1,37 @@
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const storage = {
+  async getItem(key) {
+    if (Platform.OS === 'web') {
+      const item = localStorage.getItem(key);
+      return item ? Promise.resolve(item) : Promise.resolve(null);
+    }
+    // For native platforms, we'll need AsyncStorage
+    // Return null for now until AsyncStorage is properly set up
+    return Promise.resolve(null);
+  },
+
+  async setItem(key, value) {
+    if (Platform.OS === 'web') {
+      localStorage.setItem(key, value);
+      return Promise.resolve();
+    }
+    // For native platforms, we'll need AsyncStorage
+    // No-op for now until AsyncStorage is properly set up
+    return Promise.resolve();
+  },
+
+  async multiRemove(keys) {
+    if (Platform.OS === 'web') {
+      keys.forEach(key => localStorage.removeItem(key));
+      return Promise.resolve();
+    }
+    // For native platforms, we'll need AsyncStorage
+    // No-op for now until AsyncStorage is properly set up
+    return Promise.resolve();
+  }
+};
 
 const STORAGE_KEYS = {
   LEARNING_STATS: 'learning_stats',
@@ -29,7 +62,7 @@ class ProgressTracker {
       // Update course progress
       const courseProgress = await this.getCourseProgress();
       courseProgress[courseId] = { title, progress };
-      await AsyncStorage.setItem(STORAGE_KEYS.COURSE_PROGRESS, JSON.stringify(courseProgress));
+      await storage.setItem(STORAGE_KEYS.COURSE_PROGRESS, JSON.stringify(courseProgress));
 
       // Update category progress
       if (category) {
@@ -37,7 +70,7 @@ class ProgressTracker {
         const categoryIndex = categoryProgress.findIndex(cat => cat.name === category);
         if (categoryIndex !== -1) {
           categoryProgress[categoryIndex].completed += 1;
-          await AsyncStorage.setItem(STORAGE_KEYS.CATEGORY_PROGRESS, JSON.stringify(categoryProgress));
+          await storage.setItem(STORAGE_KEYS.CATEGORY_PROGRESS, JSON.stringify(categoryProgress));
         }
       }
 
@@ -65,37 +98,28 @@ class ProgressTracker {
     }
   }
 
-  static async trackQuizCompletion(quizId, category, score) {
+  static async trackQuizCompletion(quizId, category, score, details) {
     try {
-      const stats = await this.getLearningStats();
-      stats.quizzesTaken += 1;
-      stats.averageScore = Math.round(
-        (stats.averageScore * (stats.quizzesTaken - 1) + score) / stats.quizzesTaken
-      );
-      await this.saveLearningStats(stats);
+      // Get existing quiz progress
+      const quizProgressStr = await storage.getItem('quizProgress');
+      const quizProgress = quizProgressStr ? JSON.parse(quizProgressStr) : {};
 
-      // Update quiz performance
-      const quizPerformance = await this.getQuizPerformance();
-      const categoryIndex = quizPerformance.findIndex(q => q.category === category);
-      if (categoryIndex !== -1) {
-        const categoryQuiz = quizPerformance[categoryIndex];
-        categoryQuiz.totalQuizzes += 1;
-        categoryQuiz.averageScore = Math.round(
-          (categoryQuiz.averageScore * (categoryQuiz.totalQuizzes - 1) + score) / categoryQuiz.totalQuizzes
-        );
-        categoryQuiz.bestScore = Math.max(categoryQuiz.bestScore, score);
-        await AsyncStorage.setItem(STORAGE_KEYS.QUIZ_PERFORMANCE, JSON.stringify(quizPerformance));
-      }
+      // Update quiz progress
+      quizProgress[quizId] = {
+        category,
+        score,
+        completedAt: new Date().toISOString(),
+        ...details
+      };
 
-      // Add to recent activities
-      await this.addRecentActivity({
-        type: 'quiz_completed',
-        title: `Quiz Completed in ${category}`,
-        detail: `Scored ${score}%`,
-        timestamp: new Date().toISOString(),
-      });
+      // Save updated progress
+      await storage.setItem('quizProgress', JSON.stringify(quizProgress));
 
-      return { stats, quizPerformance };
+      // Update category progress
+      await this.updateCategoryProgress(category, score);
+
+      // Update learning stats
+      await this.updateLearningStats('quizzes', score);
     } catch (error) {
       console.error('Error tracking quiz completion:', error);
     }
@@ -108,7 +132,7 @@ class ProgressTracker {
       if (pathIndex !== -1) {
         pathProgress[pathIndex].completedModules = completedModules;
         pathProgress[pathIndex].progress = Math.round((completedModules / totalModules) * 100);
-        await AsyncStorage.setItem(STORAGE_KEYS.PATH_PROGRESS, JSON.stringify(pathProgress));
+        await storage.setItem(STORAGE_KEYS.PATH_PROGRESS, JSON.stringify(pathProgress));
 
         // Add to recent activities
         await this.addRecentActivity({
@@ -132,7 +156,7 @@ class ProgressTracker {
       if (certIndex !== -1) {
         certProgress[certIndex].completedTasks = completedTasks;
         certProgress[certIndex].progress = Math.round((completedTasks / requiredTasks) * 100);
-        await AsyncStorage.setItem(STORAGE_KEYS.CERTIFICATION_PROGRESS, JSON.stringify(certProgress));
+        await storage.setItem(STORAGE_KEYS.CERTIFICATION_PROGRESS, JSON.stringify(certProgress));
 
         if (completedTasks === requiredTasks) {
           // Add achievement for completing certification
@@ -165,7 +189,7 @@ class ProgressTracker {
       const workshopIndex = workshops.findIndex(w => w.title === title);
       if (workshopIndex !== -1) {
         workshops[workshopIndex] = { ...workshops[workshopIndex], ...status };
-        await AsyncStorage.setItem(STORAGE_KEYS.WORKSHOP_HISTORY, JSON.stringify(workshops));
+        await storage.setItem(STORAGE_KEYS.WORKSHOP_HISTORY, JSON.stringify(workshops));
 
         // Add to recent activities
         let activityDetail = '';
@@ -193,7 +217,7 @@ class ProgressTracker {
   static async updateStreak() {
     try {
       const stats = await this.getLearningStats();
-      const lastActive = await AsyncStorage.getItem('last_active_date');
+      const lastActive = await storage.getItem('last_active_date');
       const today = new Date().toDateString();
 
       if (lastActive !== today) {
@@ -204,7 +228,7 @@ class ProgressTracker {
           // Reset streak if not active yesterday
           stats.streak = 1;
         }
-        await AsyncStorage.setItem('last_active_date', today);
+        await storage.setItem('last_active_date', today);
         await this.saveLearningStats(stats);
       }
       return stats.streak;
@@ -217,7 +241,7 @@ class ProgressTracker {
     try {
       const achievements = await this.getAchievements();
       achievements.push({ id: Date.now(), ...achievement });
-      await AsyncStorage.setItem(STORAGE_KEYS.ACHIEVEMENTS, JSON.stringify(achievements));
+      await storage.setItem(STORAGE_KEYS.ACHIEVEMENTS, JSON.stringify(achievements));
 
       // Add to recent activities
       await this.addRecentActivity({
@@ -239,54 +263,78 @@ class ProgressTracker {
       activities.unshift({ id: Date.now(), ...activity });
       // Keep only last 50 activities
       const trimmedActivities = activities.slice(0, 50);
-      await AsyncStorage.setItem(STORAGE_KEYS.RECENT_ACTIVITIES, JSON.stringify(trimmedActivities));
+      await storage.setItem(STORAGE_KEYS.RECENT_ACTIVITIES, JSON.stringify(trimmedActivities));
       return trimmedActivities;
     } catch (error) {
       console.error('Error adding recent activity:', error);
     }
   }
 
-  static async updateCategoryProgress(categoryProgress) {
+  static async updateCategoryProgress(category, score) {
     try {
-      await AsyncStorage.setItem(STORAGE_KEYS.CATEGORY_PROGRESS, JSON.stringify(categoryProgress));
-      
-      // Check for achievements
-      const completedCategories = categoryProgress.filter(cat => cat.explored).length;
-      if (completedCategories >= 3) {
-        await this.addAchievement({
-          title: 'Category Explorer',
-          description: 'Explored 3 or more learning categories',
-          icon: 'explore',
-          unlockedDate: new Date().toISOString()
-        });
-      }
-      if (completedCategories >= 6) {
-        await this.addAchievement({
-          title: 'Learning Enthusiast',
-          description: 'Explored all learning categories',
-          icon: 'school',
-          unlockedDate: new Date().toISOString()
-        });
+      const categoryProgressStr = await storage.getItem('categoryProgress');
+      const categoryProgress = categoryProgressStr ? JSON.parse(categoryProgressStr) : {};
+
+      if (!categoryProgress[category]) {
+        categoryProgress[category] = {
+          quizzesTaken: 0,
+          totalScore: 0,
+          highestScore: 0
+        };
       }
 
-      return categoryProgress;
+      const progress = categoryProgress[category];
+      progress.quizzesTaken += 1;
+      progress.totalScore += score;
+      progress.highestScore = Math.max(progress.highestScore, score);
+      progress.averageScore = progress.totalScore / progress.quizzesTaken;
+
+      await storage.setItem('categoryProgress', JSON.stringify(categoryProgress));
     } catch (error) {
       console.error('Error updating category progress:', error);
-      throw error;
+    }
+  }
+
+  static async updateLearningStats(type, value) {
+    try {
+      const statsStr = await storage.getItem('learningStats');
+      const stats = statsStr ? JSON.parse(statsStr) : {
+        totalQuizzesTaken: 0,
+        averageScore: 0,
+        totalScore: 0,
+        streakDays: 0,
+        lastActivity: null
+      };
+
+      if (type === 'quizzes') {
+        stats.totalQuizzesTaken += 1;
+        stats.totalScore += value;
+        stats.averageScore = stats.totalScore / stats.totalQuizzesTaken;
+      }
+
+      // Update streak
+      const today = new Date().toDateString();
+      if (stats.lastActivity !== today) {
+        stats.streakDays += 1;
+        stats.lastActivity = today;
+      }
+
+      await storage.setItem('learningStats', JSON.stringify(stats));
+    } catch (error) {
+      console.error('Error updating learning stats:', error);
     }
   }
 
   // Getter methods
   static async getLearningStats() {
     try {
-      const stats = await AsyncStorage.getItem(STORAGE_KEYS.LEARNING_STATS);
-      return stats ? JSON.parse(stats) : {
-        totalHours: 0,
-        coursesStarted: 0,
-        coursesCompleted: 0,
-        quizzesTaken: 0,
+      const statsStr = await storage.getItem('learningStats');
+      return statsStr ? JSON.parse(statsStr) : {
+        totalQuizzesTaken: 0,
         averageScore: 0,
-        streak: 0,
+        totalScore: 0,
+        streakDays: 0,
+        lastActivity: null
       };
     } catch (error) {
       console.error('Error getting learning stats:', error);
@@ -296,7 +344,7 @@ class ProgressTracker {
 
   static async getCourseProgress() {
     try {
-      const progress = await AsyncStorage.getItem(STORAGE_KEYS.COURSE_PROGRESS);
+      const progress = await storage.getItem(STORAGE_KEYS.COURSE_PROGRESS);
       return progress ? JSON.parse(progress) : {};
     } catch (error) {
       console.error('Error getting course progress:', error);
@@ -306,30 +354,17 @@ class ProgressTracker {
 
   static async getCategoryProgress() {
     try {
-      const progress = await AsyncStorage.getItem(STORAGE_KEYS.CATEGORY_PROGRESS);
-      if (!progress) {
-        // Initialize with default categories
-        const defaultProgress = [
-          { name: 'Programming', completed: 0, total: 150, explored: false },
-          { name: 'Design', completed: 0, total: 120, explored: false },
-          { name: 'Mathematics', completed: 0, total: 90, explored: false },
-          { name: 'Languages', completed: 0, total: 85, explored: false },
-          { name: 'Science', completed: 0, total: 95, explored: false },
-          { name: 'Music', completed: 0, total: 70, explored: false }
-        ];
-        await AsyncStorage.setItem(STORAGE_KEYS.CATEGORY_PROGRESS, JSON.stringify(defaultProgress));
-        return defaultProgress;
-      }
-      return JSON.parse(progress);
+      const progressStr = await storage.getItem('categoryProgress');
+      return progressStr ? JSON.parse(progressStr) : {};
     } catch (error) {
       console.error('Error getting category progress:', error);
-      throw error;
+      return {};
     }
   }
 
   static async getPathProgress() {
     try {
-      const progress = await AsyncStorage.getItem(STORAGE_KEYS.PATH_PROGRESS);
+      const progress = await storage.getItem(STORAGE_KEYS.PATH_PROGRESS);
       return progress ? JSON.parse(progress) : [
         {
           title: 'Full-Stack Development',
@@ -354,7 +389,7 @@ class ProgressTracker {
 
   static async getCertificationProgress() {
     try {
-      const progress = await AsyncStorage.getItem(STORAGE_KEYS.CERTIFICATION_PROGRESS);
+      const progress = await storage.getItem(STORAGE_KEYS.CERTIFICATION_PROGRESS);
       return progress ? JSON.parse(progress) : [
         {
           title: 'Full Stack Developer',
@@ -381,7 +416,7 @@ class ProgressTracker {
 
   static async getWorkshopHistory() {
     try {
-      const history = await AsyncStorage.getItem(STORAGE_KEYS.WORKSHOP_HISTORY);
+      const history = await storage.getItem(STORAGE_KEYS.WORKSHOP_HISTORY);
       return history ? JSON.parse(history) : [];
     } catch (error) {
       console.error('Error getting workshop history:', error);
@@ -391,7 +426,7 @@ class ProgressTracker {
 
   static async getQuizPerformance() {
     try {
-      const performance = await AsyncStorage.getItem(STORAGE_KEYS.QUIZ_PERFORMANCE);
+      const performance = await storage.getItem(STORAGE_KEYS.QUIZ_PERFORMANCE);
       return performance ? JSON.parse(performance) : [
         { category: 'Programming', averageScore: 0, totalQuizzes: 0, bestScore: 0 },
         { category: 'Design', averageScore: 0, totalQuizzes: 0, bestScore: 0 },
@@ -405,7 +440,7 @@ class ProgressTracker {
 
   static async getAchievements() {
     try {
-      const achievements = await AsyncStorage.getItem(STORAGE_KEYS.ACHIEVEMENTS);
+      const achievements = await storage.getItem(STORAGE_KEYS.ACHIEVEMENTS);
       return achievements ? JSON.parse(achievements) : [];
     } catch (error) {
       console.error('Error getting achievements:', error);
@@ -415,21 +450,44 @@ class ProgressTracker {
 
   static async getRecentActivities() {
     try {
-      const activities = await AsyncStorage.getItem(STORAGE_KEYS.RECENT_ACTIVITIES);
-      return activities ? JSON.parse(activities) : [];
+      const activitiesStr = await storage.getItem('recentActivities');
+      return activitiesStr ? JSON.parse(activitiesStr) : [];
     } catch (error) {
       console.error('Error getting recent activities:', error);
-      return null;
+      return [];
     }
   }
 
   // Helper method to save learning stats
   static async saveLearningStats(stats) {
     try {
-      await AsyncStorage.setItem(STORAGE_KEYS.LEARNING_STATS, JSON.stringify(stats));
+      await storage.setItem(STORAGE_KEYS.LEARNING_STATS, JSON.stringify(stats));
       return stats;
     } catch (error) {
       console.error('Error saving learning stats:', error);
+    }
+  }
+
+  static async getQuizProgress() {
+    try {
+      const progressStr = await storage.getItem('quizProgress');
+      return progressStr ? JSON.parse(progressStr) : {};
+    } catch (error) {
+      console.error('Error getting quiz progress:', error);
+      return {};
+    }
+  }
+
+  static async resetProgress() {
+    try {
+      await storage.multiRemove([
+        'quizProgress',
+        'categoryProgress',
+        'learningStats',
+        'recentActivities'
+      ]);
+    } catch (error) {
+      console.error('Error resetting progress:', error);
     }
   }
 }

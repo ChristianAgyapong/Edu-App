@@ -17,6 +17,9 @@ export default function Quiz() {
       id: 1,
       title: "JavaScript Fundamentals",
       category: "Programming",
+      description: "Test your knowledge of JavaScript basics",
+      difficulty: "Beginner",
+      estimatedTime: "10 mins",
       questions: [
         {
           id: 1,
@@ -39,6 +42,17 @@ export default function Quiz() {
             "All of the above"
           ],
           correctAnswer: 3
+        },
+        {
+          id: 3,
+          question: "What is the correct way to write a JavaScript array?",
+          options: [
+            "var colors = (1:'red', 2:'green', 3:'blue')",
+            "var colors = 'red', 'green', 'blue'",
+            "var colors = ['red', 'green', 'blue']",
+            "var colors = {red, green, blue}"
+          ],
+          correctAnswer: 2
         }
       ]
     },
@@ -46,6 +60,9 @@ export default function Quiz() {
       id: 2,
       title: "UI/UX Design Principles",
       category: "Design",
+      description: "Test your understanding of UI/UX design fundamentals",
+      difficulty: "Intermediate",
+      estimatedTime: "15 mins",
       questions: [
         {
           id: 1,
@@ -57,6 +74,157 @@ export default function Quiz() {
             "Using trendy colors"
           ],
           correctAnswer: 1
+        },
+        {
+          id: 2,
+          question: "Which principle suggests that related elements should be grouped together?",
+          options: [
+            "Contrast",
+            "Repetition",
+            "Proximity",
+            "Alignment"
+          ],
+          correctAnswer: 2
+        },
+        {
+          id: 3,
+          question: "What is the purpose of a wireframe?",
+          options: [
+            "To make the final design look beautiful",
+            "To plan the basic structure and layout",
+            "To add colors and images",
+            "To test the website"
+          ],
+          correctAnswer: 1
+        }
+      ]
+    },
+    {
+      id: 3,
+      title: "Python Programming",
+      category: "Programming",
+      description: "Test your Python programming skills",
+      difficulty: "Beginner",
+      estimatedTime: "12 mins",
+      questions: [
+        {
+          id: 1,
+          question: "What is Python?",
+          options: [
+            "A snake species",
+            "A high-level programming language",
+            "A database system",
+            "A web browser"
+          ],
+          correctAnswer: 1
+        },
+        {
+          id: 2,
+          question: "How do you create a list in Python?",
+          options: [
+            "list = (1, 2, 3)",
+            "list = {1, 2, 3}",
+            "list = [1, 2, 3]",
+            "list = <1, 2, 3>"
+          ],
+          correctAnswer: 2
+        },
+        {
+          id: 3,
+          question: "Which of these is a correct way to comment in Python?",
+          options: [
+            "// This is a comment",
+            "/* This is a comment */",
+            "# This is a comment",
+            "<!-- This is a comment -->"
+          ],
+          correctAnswer: 2
+        }
+      ]
+    },
+    {
+      id: 4,
+      title: "Web Development Basics",
+      category: "Programming",
+      description: "Test your knowledge of web development fundamentals",
+      difficulty: "Beginner",
+      estimatedTime: "15 mins",
+      questions: [
+        {
+          id: 1,
+          question: "What does HTML stand for?",
+          options: [
+            "Hyper Text Markup Language",
+            "High Tech Modern Language",
+            "Hyper Transfer Markup Language",
+            "Home Tool Markup Language"
+          ],
+          correctAnswer: 0
+        },
+        {
+          id: 2,
+          question: "Which CSS property is used to change the text color?",
+          options: [
+            "text-color",
+            "font-color",
+            "color",
+            "text-style"
+          ],
+          correctAnswer: 2
+        },
+        {
+          id: 3,
+          question: "What is the correct HTML for creating a hyperlink?",
+          options: [
+            "<link>Google</link>",
+            "<a url='google.com'>Google</a>",
+            "<a href='google.com'>Google</a>",
+            "<hyperlink>Google</hyperlink>"
+          ],
+          correctAnswer: 2
+        }
+      ]
+    },
+    {
+      id: 5,
+      title: "Mobile App Design",
+      category: "Design",
+      description: "Test your mobile app design knowledge",
+      difficulty: "Advanced",
+      estimatedTime: "20 mins",
+      questions: [
+        {
+          id: 1,
+          question: "What is the recommended minimum touch target size for mobile interfaces?",
+          options: [
+            "24x24 pixels",
+            "44x44 pixels",
+            "16x16 pixels",
+            "32x32 pixels"
+          ],
+          correctAnswer: 1
+        },
+        {
+          id: 2,
+          question: "Which gesture is most commonly used for refreshing content on mobile?",
+          options: [
+            "Double tap",
+            "Long press",
+            "Pull to refresh",
+            "Pinch to zoom"
+          ],
+          correctAnswer: 2
+        },
+        {
+          id: 3,
+          question: "What is the purpose of a bottom navigation bar in mobile apps?",
+          options: [
+            "To look pretty",
+            "To fill empty space",
+            "To provide quick access to key features",
+            "To show ads"
+          ],
+          correctAnswer: 2
         }
       ]
     }
@@ -86,13 +254,67 @@ export default function Quiz() {
       await ProgressTracker.trackQuizCompletion(
         quiz.id,
         quiz.category,
-        score
+        score,
+        {
+          title: quiz.title,
+          difficulty: quiz.difficulty,
+          totalQuestions: quiz.questions.length,
+          timestamp: new Date().toISOString()
+        }
       );
+
+      await ProgressTracker.addRecentActivity({
+        type: 'quiz_completed',
+        title: `Completed ${quiz.title}`,
+        detail: `Scored ${score}% on ${quiz.difficulty} level quiz`,
+        timestamp: new Date().toISOString(),
+        category: quiz.category
+      });
+
       setCurrentQuiz(null);
     } catch (error) {
       console.error('Error submitting quiz:', error);
     }
   };
+
+  const renderQuizCard = (quiz) => (
+    <TouchableOpacity
+      key={quiz.id}
+      style={styles.quizCard}
+      onPress={() => handleQuizStart(quiz)}
+    >
+      <View style={styles.quizIcon}>
+        <MaterialIcons 
+          name={quiz.category === "Programming" ? "code" : "brush"} 
+          size={24} 
+          color={Colors.PRIMARY} 
+        />
+      </View>
+      <View style={styles.quizInfo}>
+        <Text style={styles.quizTitle}>{quiz.title}</Text>
+        <Text style={styles.quizCategory}>{quiz.category}</Text>
+        <View style={styles.quizMetaInfo}>
+          <View style={styles.metaItem}>
+            <MaterialIcons name="help" size={16} color={Colors.PRIMARY} />
+            <Text style={styles.metaText}>{quiz.questions.length} questions</Text>
+          </View>
+          <View style={styles.metaItem}>
+            <MaterialIcons name="timer" size={16} color={Colors.PRIMARY} />
+            <Text style={styles.metaText}>{quiz.estimatedTime}</Text>
+          </View>
+          <View style={[styles.difficultyTag, styles[quiz.difficulty.toLowerCase()]]}>
+            <Text style={styles.difficultyText}>{quiz.difficulty}</Text>
+          </View>
+        </View>
+        <Text style={styles.quizDescription}>{quiz.description}</Text>
+      </View>
+      <MaterialIcons 
+        name="arrow-forward-ios" 
+        size={20} 
+        color={Colors.PRIMARY} 
+      />
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.container}>
@@ -110,33 +332,7 @@ export default function Quiz() {
         <Animated.View style={{ opacity: fadeAnim }}>
           {!currentQuiz ? (
             <View style={styles.quizList}>
-              {quizzes.map((quiz) => (
-                <TouchableOpacity
-                  key={quiz.id}
-                  style={styles.quizCard}
-                  onPress={() => handleQuizStart(quiz)}
-                >
-                  <View style={styles.quizIcon}>
-                    <MaterialIcons 
-                      name={quiz.category === "Programming" ? "code" : "brush"} 
-                      size={24} 
-                      color={Colors.PRIMARY} 
-                    />
-                  </View>
-                  <View style={styles.quizInfo}>
-                    <Text style={styles.quizTitle}>{quiz.title}</Text>
-                    <Text style={styles.quizCategory}>{quiz.category}</Text>
-                    <Text style={styles.questionCount}>
-                      {quiz.questions.length} questions
-                    </Text>
-                  </View>
-                  <MaterialIcons 
-                    name="arrow-forward-ios" 
-                    size={20} 
-                    color={Colors.PRIMARY} 
-                  />
-                </TouchableOpacity>
-              ))}
+              {quizzes.map(renderQuizCard)}
             </View>
           ) : (
             <QuizContent 
@@ -315,9 +511,45 @@ const styles = StyleSheet.create({
     opacity: 0.8,
     marginBottom: 4,
   },
-  questionCount: {
+  quizMetaInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  metaText: {
+    color: '#f0f0f0',
+    fontSize: 14,
+    marginLeft: 4,
+  },
+  difficultyTag: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+  },
+  beginner: {
+    backgroundColor: 'rgba(76, 175, 80, 0.2)',
+  },
+  intermediate: {
+    backgroundColor: 'rgba(255, 152, 0, 0.2)',
+  },
+  advanced: {
+    backgroundColor: 'rgba(244, 67, 54, 0.2)',
+  },
+  difficultyText: {
     fontSize: 12,
-    color: Colors.PRIMARY,
+    fontWeight: '600',
+  },
+  quizDescription: {
+    color: '#f0f0f0',
+    fontSize: 14,
+    opacity: 0.8,
+    marginTop: 4,
   },
   quizContainer: {
     padding: 20,
