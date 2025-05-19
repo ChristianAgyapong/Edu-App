@@ -526,22 +526,14 @@ export default function Explore() {
 
   const handleQuizStart = async (course) => {
     try {
-      // Simulate a quiz completion with a random score
-      const score = Math.floor(Math.random() * 30) + 70; // Score between 70-100
-      await ProgressTracker.trackQuizCompletion(
-        course.id,
-        `${course.title} Quiz`,
-        score
-      );
-
-      // Show quiz result
+      router.push('/quiz');
+    } catch (error) {
+      console.error('Error starting quiz:', error);
       Alert.alert(
-        'Quiz Completed!',
-        `You scored ${score}% on the ${course.title} quiz.`,
+        'Error',
+        'Unable to start the quiz. Please try again later.',
         [{ text: 'OK' }]
       );
-    } catch (error) {
-      console.error('Error handling quiz:', error);
     }
   };
 

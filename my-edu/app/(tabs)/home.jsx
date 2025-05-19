@@ -1,13 +1,25 @@
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Platform, Animated, Image, Dimensions, FlatList } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
-import { MaterialIcons, FontAwesome5, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialIcons, FontAwesome5, Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 import { Link, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 import Colors from '../../constants/Colors';
 
 const isWeb = Platform.OS === 'web';
 const { width, height } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.85;
+
+// Helper function for haptic feedback
+const triggerHaptic = async () => {
+  if (!isWeb) {
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (error) {
+      console.log('Haptics not available');
+    }
+  }
+};
 
 export default function Home() {
   const router = useRouter();
@@ -17,32 +29,43 @@ export default function Home() {
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const scrollX = useRef(new Animated.Value(0)).current;
   const carouselScrollX = useRef(new Animated.Value(0)).current;
+  const headerScaleAnim = useRef(new Animated.Value(1)).current;
+  const headerRotateAnim = useRef(new Animated.Value(0)).current;
+  const streakAnim = useRef(new Animated.Value(0)).current;
 
   const [activeSlide, setActiveSlide] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [currentStreak, setCurrentStreak] = useState(7); // Days
+  const [longestStreak, setLongestStreak] = useState(14); // Days
 
   // Featured carousel data
   const carouselData = [
     {
       id: 1,
       title: "Summer Coding Bootcamp",
-      image: require('../../assets/images/logo1.jpg'),
+      icon: "code",
+      iconFamily: "FontAwesome5",
       description: "Intensive 12-week program",
-      startDate: "Starts July 1st"
+      startDate: "Starts July 1st",
+      gradient: ['#FF6B6B', '#4ECDC4']
     },
     {
       id: 2,
       title: "Design Workshop Series",
-      image: require('../../assets/images/logo2.jpg'),
+      icon: "bezier-curve",
+      iconFamily: "FontAwesome5",
       description: "Learn from industry experts",
-      startDate: "Weekly sessions"
+      startDate: "Weekly sessions",
+      gradient: ['#A8E6CF', '#1B9CFC']
     },
     {
       id: 3,
       title: "AI & Machine Learning",
-      image: require('../../assets/images/logo1.jpg'),
+      icon: "brain",
+      iconFamily: "FontAwesome5",
       description: "Future of Technology",
-      startDate: "Enroll Now"
+      startDate: "Enroll Now",
+      gradient: ['#FF9A9E', '#FAD0C4']
     }
   ];
 
@@ -113,6 +136,65 @@ export default function Home() {
     }
   ];
 
+  // Learning paths
+  const learningPaths = [
+    {
+      id: 1,
+      title: "Web Development",
+      progress: 65,
+      icon: "web",
+      totalCourses: 12,
+      completedCourses: 8,
+      gradient: ['#4CAF50', '#2196F3']
+    },
+    {
+      id: 2,
+      title: "Mobile Development",
+      progress: 45,
+      icon: "mobile-alt",
+      totalCourses: 10,
+      completedCourses: 4,
+      gradient: ['#FF9800', '#F44336']
+    },
+    {
+      id: 3,
+      title: "Data Science",
+      progress: 30,
+      icon: "chart-line",
+      totalCourses: 15,
+      completedCourses: 5,
+      gradient: ['#9C27B0', '#673AB7']
+    }
+  ];
+
+  // Weekly goals
+  const weeklyGoals = [
+    {
+      id: 1,
+      title: "Study Hours",
+      current: 12,
+      target: 20,
+      icon: "timer",
+      unit: "hours"
+    },
+    {
+      id: 2,
+      title: "Practice Problems",
+      current: 25,
+      target: 50,
+      icon: "code",
+      unit: "problems"
+    },
+    {
+      id: 3,
+      title: "Quiz Score",
+      current: 85,
+      target: 100,
+      icon: "school",
+      unit: "%"
+    }
+  ];
+
   // Achievements
   const achievements = [
     {
@@ -130,6 +212,64 @@ export default function Home() {
       progress: 80
     }
   ];
+
+  // Add new sections data
+  const quickActions = [
+    {
+      id: 1,
+      title: "Continue Learning",
+      icon: "play-circle",
+      color: "#4CAF50",
+      route: "/course/latest"
+    },
+    {
+      id: 2,
+      title: "Practice Quiz",
+      icon: "help-circle",
+      color: "#2196F3",
+      route: "/quiz"
+    },
+    {
+      id: 3,
+      title: "Study Group",
+      icon: "users",
+      color: "#9C27B0",
+      route: "/groups"
+    },
+    {
+      id: 4,
+      title: "Resources",
+      icon: "book",
+      color: "#FF9800",
+      route: "/resources"
+    }
+  ];
+
+  const upcomingDeadlines = [
+    {
+      id: 1,
+      title: "JavaScript Final Project",
+      dueDate: "2024-03-20",
+      progress: 75,
+      priority: "high"
+    },
+    {
+      id: 2,
+      title: "UI Design Assignment",
+      dueDate: "2024-03-25",
+      progress: 45,
+      priority: "medium"
+    }
+  ];
+
+  // Calculate days remaining
+  const getDaysRemaining = (dueDate) => {
+    const today = new Date();
+    const due = new Date(dueDate);
+    const diffTime = Math.abs(due - today);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
 
   useEffect(() => {
     Animated.parallel([
@@ -151,7 +291,68 @@ export default function Home() {
         useNativeDriver: true,
       })
     ]).start();
+
+    // Add header animations
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(headerScaleAnim, {
+          toValue: 1.1,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(headerScaleAnim, {
+          toValue: 1,
+          duration: 2000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(headerRotateAnim, {
+          toValue: 1,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(headerRotateAnim, {
+          toValue: 0,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    // Add streak animation
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(streakAnim, {
+          toValue: 1,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(streakAnim, {
+          toValue: 0,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
   }, []);
+
+  const headerRotate = headerRotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg']
+  });
+
+  const handlePress = (action) => {
+    triggerHaptic();
+    if (action === '/quiz') {
+      router.push('/quiz');
+    } else if (action) {
+      router.push(action);
+    }
+  };
 
   const renderCarouselItem = ({ item, index }) => {
     const inputRange = [
@@ -174,17 +375,29 @@ export default function Home() {
 
     return (
       <Animated.View style={[styles.carouselItem, { transform: [{ scale }], opacity }]}>
-        <Image source={item.image} style={styles.carouselImage} />
-        <View style={styles.carouselContent}>
-          <Text style={styles.carouselTitle}>{item.title}</Text>
-          <Text style={styles.carouselDescription}>{item.description}</Text>
-          <View style={styles.carouselFooter}>
-            <Text style={styles.carouselDate}>{item.startDate}</Text>
-            <TouchableOpacity style={styles.carouselButton}>
-              <Text style={styles.carouselButtonText}>Learn More</Text>
-            </TouchableOpacity>
+        <LinearGradient
+          colors={item.gradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.carouselGradient}
+        >
+          <View style={styles.carouselIconContainer}>
+            <FontAwesome5 name={item.icon} size={48} color="#fff" />
           </View>
-        </View>
+          <View style={styles.carouselContent}>
+            <Text style={styles.carouselTitle}>{item.title}</Text>
+            <Text style={styles.carouselDescription}>{item.description}</Text>
+            <View style={styles.carouselFooter}>
+              <Text style={styles.carouselDate}>{item.startDate}</Text>
+              <TouchableOpacity 
+                style={styles.carouselButton}
+                onPress={() => handlePress('learnMore')}
+              >
+                <Text style={styles.carouselButtonText}>Learn More</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </LinearGradient>
       </Animated.View>
     );
   };
@@ -224,29 +437,88 @@ export default function Home() {
     );
   };
 
+  const renderStreakFlame = () => {
+    const scale = streakAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [1, 1.2]
+    });
+
+    return (
+      <Animated.View style={[styles.streakFlame, { transform: [{ scale }] }]}>
+        <MaterialCommunityIcons name="fire" size={32} color="#FF6B6B" />
+      </Animated.View>
+    );
+  };
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <LinearGradient
+        colors={['#232838', '#1a1f2e']}
+        style={styles.header}
+      >
         <View style={styles.headerLeft}>
-          <Image source={require('../../assets/images/logo1.jpg')} style={styles.logo} />
+          <Animated.View style={[styles.logoContainer, { transform: [{ scale: headerScaleAnim }] }]}>
+            <View style={styles.logoBackground}>
+              <FontAwesome5 name="graduation-cap" size={24} color={Colors.PRIMARY} />
+            </View>
+          </Animated.View>
           <View style={styles.headerText}>
             <Text style={styles.greeting}>Welcome back!</Text>
             <Text style={styles.userName}>John Doe</Text>
           </View>
         </View>
         <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.iconButton}>
+          <TouchableOpacity 
+            style={styles.iconButton}
+            onPress={() => handlePress('search')}
+          >
             <MaterialIcons name="search" size={24} color="#fff" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
+          <TouchableOpacity 
+            style={styles.iconButton}
+            onPress={() => handlePress('notifications')}
+          >
             <MaterialIcons name="notifications" size={24} color="#fff" />
-            <View style={styles.notificationBadge} />
+            <Animated.View 
+              style={[
+                styles.notificationBadge,
+                { transform: [{ rotate: headerRotate }] }
+              ]} 
+            />
           </TouchableOpacity>
         </View>
-      </View>
+      </LinearGradient>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <Animated.View style={[{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+          {/* Quick Actions */}
+          <View style={styles.quickActionsContainer}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Quick Actions</Text>
+            </View>
+            <View style={styles.quickActionsGrid}>
+              {quickActions.map((action) => (
+                <TouchableOpacity
+                  key={action.id}
+                  style={styles.quickActionCard}
+                  onPress={() => {
+                    handlePress(action.route);
+                  }}
+                >
+                  <Animated.View
+                    style={[
+                      styles.quickActionIcon,
+                      { backgroundColor: action.color }
+                    ]}
+                  >
+                    <Feather name={action.icon} size={24} color="#fff" />
+                  </Animated.View>
+                  <Text style={styles.quickActionTitle}>{action.title}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
           {/* Featured Carousel */}
           <View style={styles.carouselContainer}>
             <FlatList
@@ -341,6 +613,111 @@ export default function Home() {
             />
           </View>
 
+          {/* Upcoming Deadlines */}
+          <View style={styles.deadlinesContainer}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Upcoming Deadlines</Text>
+              <TouchableOpacity>
+                <Text style={styles.seeAllText}>See All</Text>
+              </TouchableOpacity>
+            </View>
+            {upcomingDeadlines.map((deadline) => (
+              <Animated.View
+                key={deadline.id}
+                style={[styles.deadlineCard, { transform: [{ scale: scaleAnim }] }]}
+              >
+                <LinearGradient
+                  colors={
+                    deadline.priority === 'high'
+                      ? ['#FF5252', '#FF1744']
+                      : ['#FFA726', '#FB8C00']
+                  }
+                  style={styles.deadlinePriorityIndicator}
+                />
+                <View style={styles.deadlineContent}>
+                  <Text style={styles.deadlineTitle}>{deadline.title}</Text>
+                  <View style={styles.deadlineInfo}>
+                    <View style={styles.deadlineProgress}>
+                      <View style={styles.progressBar}>
+                        <View
+                          style={[
+                            styles.progressFill,
+                            { width: `${deadline.progress}%` }
+                          ]}
+                        />
+                      </View>
+                      <Text style={styles.progressText}>{deadline.progress}%</Text>
+                    </View>
+                    <View style={styles.deadlineTimeRemaining}>
+                      <MaterialIcons name="access-time" size={16} color={Colors.PRIMARY} />
+                      <Text style={styles.deadlineTimeText}>
+                        {getDaysRemaining(deadline.dueDate)} days left
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              </Animated.View>
+            ))}
+          </View>
+
+          {/* Learning Paths */}
+          <View style={styles.learningPathsContainer}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Learning Paths</Text>
+              <TouchableOpacity>
+                <Text style={styles.seeAllText}>See All</Text>
+              </TouchableOpacity>
+            </View>
+            {learningPaths.map((path) => (
+              <Animated.View
+                key={path.id}
+                style={[styles.learningPathCard, { transform: [{ scale: scaleAnim }] }]}
+              >
+                <View style={styles.pathIcon}>
+                  <MaterialIcons name={path.icon} size={24} color={Colors.PRIMARY} />
+                </View>
+                <View style={styles.pathInfo}>
+                  <Text style={styles.pathTitle}>{path.title}</Text>
+                  <View style={styles.progressContainer}>
+                    <View style={styles.progressBar}>
+                      <View
+                        style={[
+                          styles.progressFill,
+                          { width: `${path.progress}%` }
+                        ]}
+                      />
+                    </View>
+                    <Text style={styles.progressText}>{path.progress}%</Text>
+                  </View>
+                </View>
+              </Animated.View>
+            ))}
+          </View>
+
+          {/* Weekly Goals */}
+          <View style={styles.weeklyGoalsContainer}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Weekly Goals</Text>
+              <TouchableOpacity>
+                <Text style={styles.seeAllText}>See All</Text>
+              </TouchableOpacity>
+            </View>
+            {weeklyGoals.map((goal) => (
+              <Animated.View
+                key={goal.id}
+                style={[styles.goalCard, { transform: [{ scale: scaleAnim }] }]}
+              >
+                <View style={styles.goalIcon}>
+                  <MaterialIcons name={goal.icon} size={24} color={Colors.PRIMARY} />
+                </View>
+                <View style={styles.goalInfo}>
+                  <Text style={styles.goalTitle}>{goal.title}</Text>
+                  <Text style={styles.goalDescription}>{goal.current} {goal.unit} / {goal.target} {goal.unit}</Text>
+                </View>
+              </Animated.View>
+            ))}
+          </View>
+
           {/* Achievements */}
           <View style={styles.achievementsContainer}>
             <View style={styles.sectionHeader}>
@@ -375,6 +752,44 @@ export default function Home() {
               </Animated.View>
             ))}
           </View>
+
+          {/* Study Streak */}
+          <View style={styles.streakContainer}>
+            <LinearGradient
+              colors={['#FF6B6B', '#FF8E53']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.streakCard}
+            >
+              {renderStreakFlame()}
+              <View style={styles.streakContent}>
+                <Text style={styles.streakTitle}>Study Streak</Text>
+                <Text style={styles.streakCount}>{currentStreak} Days</Text>
+                <View style={styles.streakInfo}>
+                  <View style={styles.streakStat}>
+                    <Text style={styles.streakLabel}>Current</Text>
+                    <Text style={styles.streakValue}>{currentStreak} days</Text>
+                  </View>
+                  <View style={styles.streakDivider} />
+                  <View style={styles.streakStat}>
+                    <Text style={styles.streakLabel}>Longest</Text>
+                    <Text style={styles.streakValue}>{longestStreak} days</Text>
+                  </View>
+                </View>
+                <TouchableOpacity 
+                  style={styles.streakButton}
+                  onPress={() => handlePress('viewProgress')}
+                >
+                  <Text style={styles.streakButtonText}>View Progress</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Decorative Elements */}
+              <View style={[styles.decorativeCircle, styles.circle1]} />
+              <View style={[styles.decorativeCircle, styles.circle2]} />
+              <View style={[styles.decorativeCircle, styles.circle3]} />
+            </LinearGradient>
+          </View>
         </Animated.View>
       </ScrollView>
     </View>
@@ -392,7 +807,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     paddingTop: isWeb ? 40 : 20,
-    backgroundColor: '#232838',
   },
   headerLeft: {
     flexDirection: 'row',
@@ -402,11 +816,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  logo: {
+  logoContainer: {
+    marginRight: 12,
+  },
+  logoBackground: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    marginRight: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: Colors.PRIMARY,
   },
   headerText: {
     justifyContent: 'center',
@@ -451,18 +872,18 @@ const styles = StyleSheet.create({
     height: 200,
     paddingHorizontal: 20,
   },
-  carouselImage: {
-    width: '100%',
-    height: '100%',
+  carouselGradient: {
+    flex: 1,
     borderRadius: 16,
-    position: 'absolute',
+    padding: 20,
+  },
+  carouselIconContainer: {
+    alignItems: 'center',
+    marginBottom: 16,
   },
   carouselContent: {
     flex: 1,
-    padding: 20,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    borderRadius: 16,
   },
   carouselTitle: {
     fontSize: 24,
@@ -654,7 +1075,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
-  achievementsContainer: {
+  learningPathsContainer: {
     padding: 20,
   },
   sectionHeader: {
@@ -671,6 +1092,67 @@ const styles = StyleSheet.create({
   seeAllText: {
     color: Colors.PRIMARY,
     fontSize: 14,
+  },
+  learningPathCard: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+  },
+  pathIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(0, 255, 149, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  pathInfo: {
+    flex: 1,
+  },
+  pathTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  weeklyGoalsContainer: {
+    padding: 20,
+  },
+  goalCard: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+  },
+  goalIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(0, 255, 149, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  goalInfo: {
+    flex: 1,
+  },
+  goalTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  goalDescription: {
+    fontSize: 14,
+    color: '#f0f0f0',
+    opacity: 0.8,
+  },
+  achievementsContainer: {
+    padding: 20,
   },
   achievementCard: {
     flexDirection: 'row',
@@ -706,5 +1188,169 @@ const styles = StyleSheet.create({
   achievementProgress: {
     flexDirection: 'row',
     alignItems: 'center',
-  }
+  },
+  quickActionsContainer: {
+    padding: 20,
+  },
+  quickActionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  quickActionCard: {
+    width: '48%',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  quickActionIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  quickActionTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#fff',
+    textAlign: 'center',
+  },
+  deadlinesContainer: {
+    padding: 20,
+  },
+  deadlineCard: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 16,
+    marginBottom: 12,
+    overflow: 'hidden',
+  },
+  deadlinePriorityIndicator: {
+    width: 4,
+    height: '100%',
+  },
+  deadlineContent: {
+    flex: 1,
+    padding: 16,
+  },
+  deadlineTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 8,
+  },
+  deadlineInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  deadlineProgress: {
+    flex: 1,
+    marginRight: 16,
+  },
+  deadlineTimeRemaining: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  deadlineTimeText: {
+    marginLeft: 4,
+    fontSize: 12,
+    color: '#f0f0f0',
+    opacity: 0.8,
+  },
+  streakContainer: {
+    padding: 20,
+  },
+  streakCard: {
+    borderRadius: 16,
+    padding: 20,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  streakFlame: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+  },
+  streakContent: {
+    alignItems: 'center',
+  },
+  streakTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 8,
+  },
+  streakCount: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 16,
+  },
+  streakInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  streakStat: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  streakLabel: {
+    fontSize: 12,
+    color: '#fff',
+    opacity: 0.8,
+    marginBottom: 4,
+  },
+  streakValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  streakDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    marginHorizontal: 20,
+  },
+  streakButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  streakButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  decorativeCircle: {
+    position: 'absolute',
+    borderRadius: 100,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  circle1: {
+    width: 100,
+    height: 100,
+    top: -20,
+    left: -20,
+  },
+  circle2: {
+    width: 60,
+    height: 60,
+    bottom: 20,
+    right: -10,
+  },
+  circle3: {
+    width: 40,
+    height: 40,
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -20 }, { translateY: -20 }],
+  },
 }); 
